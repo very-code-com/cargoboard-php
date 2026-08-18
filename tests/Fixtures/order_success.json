@@ -1,0 +1,40 @@
+{
+    "data": {
+        "id": "cm3328igs04jbqt0dluurnxyl",
+        "reference": "10374504",
+        "platformTrackingUrl": "https://my.cargoboard.com/tracking?order-id=cm3328igs04jbqt0dluurnxyl&consignee-post-code=85137",
+        "costItems": [
+            {
+                "description": "Frachtkosten",
+                "type": "SHIPMENT",
+                "subtype": null,
+                "price": { "amount": 94.23, "currency": "EUR" },
+                "pricePartVat": { "amount": 17.9, "percentage": 19, "currency": "EUR" }
+            },
+            {
+                "description": "Klimaschutzbeitrag",
+                "type": "CLIMATE_NEUTRAL_SURCHARGE",
+                "subtype": null,
+                "price": { "amount": 0.7, "currency": "EUR" },
+                "pricePartVat": { "amount": 0.13, "percentage": 19, "currency": "EUR" }
+            }
+        ],
+        "pickupOn": "2024-12-11T07:00:00.000Z",
+        "pickupAtFrom": "2024-12-11T07:00:00.000Z",
+        "pickupAtUntil": "2024-12-11T15:00:00.000Z",
+        "price": { "amount": 94.93, "currency": "EUR", "grossAmount": 112.97, "vatAmount": 18.04 },
+        "priceStandard": { "amount": 94.93, "currency": "EUR" },
+        "runtime": { "daysMin": 1, "daysMax": 2 },
+        "delivery": { "earliest": "2024-12-12T07:00:00.000Z", "latest": "2024-12-13T15:00:00.000Z" },
+        "product": "STANDARD",
+        "transportType": "GROUPAGE",
+        "co2Emission": { "amount": 0.7, "value": 35.58, "unit": "KG" }
+    },
+    "links": [
+        { "rel": "self", "method": "POST", "description": "Place an order.", "href": "https://api-sandbox.cargoboard.com/v1/orders" },
+        { "rel": "orderCancel", "method": "POST", "description": "Cancel an order.", "href": "https://api-sandbox.cargoboard.com/v1/orders/cm3328igs04jbqt0dluurnxyl/cancel" },
+        { "rel": "orderPrintConfirmation", "method": "GET", "description": "Print confirmation for an order.", "href": "https://api-sandbox.cargoboard.com/v1/orders/cm3328igs04jbqt0dluurnxyl/print-confirmation" },
+        { "rel": "orderPrintShipmentLabels", "method": "GET", "description": "Print shipment labels for an order.", "href": "https://api-sandbox.cargoboard.com/v1/orders/cm3328igs04jbqt0dluurnxyl/print-shipment-labels" },
+        { "rel": "orderTrack", "method": "GET", "description": "Track an order.", "href": "https://api-sandbox.cargoboard.com/v1/orders/10374504/tracking" }
+    ]
+}

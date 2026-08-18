@@ -1,0 +1,342 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Documentation",
+    "description": "<h4>Authentication.</h4>\n<p>Authentication is done with X-API-KEY. You can request a key via mail to api@cargoboard.com.",
+    "version": "1.0.5",
+    "contact": {
+      "name": "Cargoboard Admin",
+      "url": "https://cargoboard.com/",
+      "email": "api@cargoboard.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api-sandbox.cargoboard.com",
+      "description": "api-sandbox.cargoboard.com"
+    },
+    {
+      "url": "https://api.cargoboard.com",
+      "description": "api.cargoboard.com"
+    }
+  ],
+  "paths": {
+    "/v1/invoices": {
+      "get": {
+        "operationId": "get-invoices",
+        "summary": "Get invoices",
+        "description": "This endpoint is used to Get invoices.",
+        "parameters": [
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Quantity of Easybill invoices to take",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "example": 50
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for next page of Easybill invoices",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Order results by properties",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "sequence"
+              ]
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filter results by properties For example, postCodeFrom=\"33100\"",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "total",
+            "in": "query",
+            "description": "Get total quantity of easybill invoices",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer invoices fetched successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindManyEasybillInvoicesResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Customer cannot be found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "tags": [
+          "Invoices"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HateoasLink": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "description": "Relation name",
+            "type": "string"
+          },
+          "method": {
+            "description": "Http method like: GET, POST, PUT, DELETE.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description for link.",
+            "type": "string"
+          },
+          "href": {
+            "description": "Href for relation.",
+            "type": "string"
+          }
+        }
+      },
+      "FindManyEasybillInvoicesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Public Holidays.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EasybillInvoice"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/HateoasLink"
+          },
+          "total": {
+            "description": "Total number of easybill invoices.",
+            "type": "number"
+          }
+        }
+      },
+      "OrderId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Id of order related to Easybill Invoice.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CustomerId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Id of customer related to Easybill Invoice.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "EasybillInvoice": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "description": "Sequence of EasybillInvoice.",
+            "type": "number"
+          },
+          "documentId": {
+            "description": "Id of document (invoice) on Easybill API.",
+            "type": "number"
+          },
+          "isDocumentCompleted": {
+            "description": "If true document has been completed on Easybill API.",
+            "type": "boolean",
+            "default": false
+          },
+          "documentCompletedAt": {
+            "description": "Date of document completed on Easybill API.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDocumentCopiedToArchive": {
+            "description": "If true document has been copied from Easybill API to GCP storage archive.",
+            "type": "boolean",
+            "default": false
+          },
+          "isDocumentCopiedToArchiveZipped": {
+            "description": "If true document copied from Easybill API to GCP storage archive is zipped.",
+            "type": "boolean",
+            "default": false
+          },
+          "documentCopiedToArchiveAt": {
+            "description": "Date of document copy from Easybill API to GCP storage archive.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDocumentSent": {
+            "description": "If true document has been sent on Easybill API.",
+            "type": "boolean",
+            "default": false
+          },
+          "documentSentAt": {
+            "description": "Date of document sent on Easybill API.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDocumentCancelled": {
+            "description": "If true document has been cancelled on Easybill API.",
+            "type": "boolean",
+            "readOnly": true
+          },
+          "documentCancelledAt": {
+            "description": "Date of document cancellation on Easybill API.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "documentNumber": {
+            "description": "Number for document (invoice) on Easybill API.",
+            "type": "string"
+          },
+          "cancellationDocumentId": {
+            "description": "Id for cancellation document (invoice) on Easybill API.",
+            "type": "number"
+          },
+          "isCancellationDocumentSent": {
+            "description": "If true cancellation document has been cancelled on Easybill API.",
+            "type": "boolean",
+            "default": false,
+            "readOnly": true
+          },
+          "cancellationDocumentSentAt": {
+            "description": "Date of cancellation document sent on Easybill API.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "documentAmount": {
+            "type": "number",
+            "example": 2
+          },
+          "isDone": {
+            "description": "If true invoicing for related orders is finished on Easybill API.",
+            "type": "boolean",
+            "default": false
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderId"
+            }
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerId"
+          },
+          "dueDate": {
+            "description": "Date (time part value will be omitted) to when invoice should be paid.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-07-29"
+          },
+          "dueInDays": {
+            "description": "Period of time in days to when invoice should be paid.",
+            "type": "number",
+            "example": 12
+          },
+          "isPaid": {
+            "description": "If true invoice is paid.",
+            "type": "boolean",
+            "default": false
+          },
+          "paidAt": {
+            "description": "Date of payment.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-07-17T10:10:39.535Z"
+          },
+          "paymentAmount": {
+            "description": "Amount for payment.",
+            "type": "number",
+            "example": 13.21
+          },
+          "paymentCurrency": {
+            "description": "Currency for payment. Possible values: EUR.",
+            "type": "string",
+            "example": "EUR",
+            "enum": [
+              "EUR"
+            ]
+          }
+        },
+        "required": [
+          "isDocumentCancelled",
+          "documentNumber",
+          "cancellationDocumentId",
+          "documentAmount",
+          "orders",
+          "customer",
+          "paymentAmount"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "X-API-KEY": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Documentation for customers.",
+    "url": "https://docs.cargoboard.com"
+  },
+  "x-readme": {
+    "explorer-enabled": true,
+    "proxy-enabled": true
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Documentation",
+    "description": "<h4>Authentication.</h4>\n<p>Authentication is done with X-API-KEY. You can request a key via mail to api@cargoboard.com.",
+    "version": "1.0.5",
+    "contact": {
+      "name": "Cargoboard Admin",
+      "url": "https://cargoboard.com/",
+      "email": "api@cargoboard.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api-sandbox.cargoboard.com",
+      "description": "api-sandbox.cargoboard.com"
+    },
+    {
+      "url": "https://api.cargoboard.com",
+      "description": "api.cargoboard.com"
+    }
+  ],
+  "paths": {
+    "/v1/quotations/{id}": {
+      "get": {
+        "operationId": "get-a-quotation",
+        "summary": "Get a Quotation",
+        "description": "Authorization with x-api-key.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotation"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "tags": [
+          "Quotations"
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "X-API-KEY": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Documentation for customers.",
+    "url": "https://docs.cargoboard.com"
+  },
+  "x-readme": {
+    "explorer-enabled": true,
+    "proxy-enabled": true
+  }
+}

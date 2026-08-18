@@ -1,0 +1,33 @@
+{
+    "product": "STANDARD",
+    "shipper": {
+        "name": "Producer ABC GmbH & Co. KG",
+        "address": {
+            "street": "Examplestreet 12a",
+            "postCode": "40239",
+            "countryCode": "DE",
+            "city": "Düsseldorf"
+        },
+        "pickupOn": "2026-06-16"
+    },
+    "consignee": {
+        "name": "Consignee ABC AG",
+        "address": {
+            "street": "Examplestreet 5",
+            "postCode": "41061",
+            "countryCode": "DE",
+            "city": "Mönchengladbach"
+        }
+    },
+    "lines": [
+        {
+            "unitQuantity": 2,
+            "unitPackageType": "KT",
+            "content": "Spare parts",
+            "unitLength": 40,
+            "unitWidth": 30,
+            "unitHeight": 20,
+            "unitWeight": 5
+        }
+    ]
+}

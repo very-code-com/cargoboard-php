@@ -1,0 +1,215 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Documentation",
+    "description": "<h4>Authentication.</h4>\n<p>Authentication is done with X-API-KEY. You can request a key via mail to api@cargoboard.com.",
+    "version": "1.0.5",
+    "contact": {
+      "name": "Cargoboard Admin",
+      "url": "https://cargoboard.com/",
+      "email": "api@cargoboard.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api-sandbox.cargoboard.com",
+      "description": "api-sandbox.cargoboard.com"
+    },
+    {
+      "url": "https://api.cargoboard.com",
+      "description": "api.cargoboard.com"
+    }
+  ],
+  "paths": {
+    "/v1/dangerous-goods/un-numbers/{unNumber}": {
+      "get": {
+        "operationId": "get-dangerous-good-adr-data-by-un-number",
+        "summary": "Get dangerous goods ADR data by UN number",
+        "description": "This endpoint is used to look up ADR reference data (hazard classification, packaging group, tunnel restriction, etc.) for a given UN number.",
+        "parameters": [
+          {
+            "name": "unNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dangerous good ADR data fetched successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseGetDangerousGoodAdrData"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "UN number cannot be found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "tags": [
+          "DangerousGoods"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HateoasLink": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "description": "Relation name",
+            "type": "string"
+          },
+          "method": {
+            "description": "Http method like: GET, POST, PUT, DELETE.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description for link.",
+            "type": "string"
+          },
+          "href": {
+            "description": "Href for relation.",
+            "type": "string"
+          }
+        }
+      },
+      "DangerousGoodAdrData": {
+        "type": "object",
+        "properties": {
+          "unNo": {
+            "type": "string",
+            "example": "3480",
+            "description": "UN number of the dangerous good."
+          },
+          "substanceName": {
+            "type": "string",
+            "example": "LITHIUM-IONEN-BATTERIEN",
+            "description": "Proper shipping name / substance name for the UN number."
+          },
+          "classificationCode": {
+            "type": "string",
+            "example": "M4",
+            "description": "ADR classification code."
+          },
+          "riskMain": {
+            "type": "string",
+            "example": "9A",
+            "description": "Main hazard class/label for the UN number."
+          },
+          "riskAdditional1": {
+            "type": "string",
+            "example": "First additional risk is...",
+            "description": "First additional hazard label, if applicable."
+          },
+          "riskAdditional2": {
+            "type": "string",
+            "example": "Second additional risk is...",
+            "description": "Second additional hazard label, if applicable."
+          },
+          "riskAdditional3": {
+            "type": "string",
+            "example": "Third additional risk is...",
+            "description": "Third additional hazard label, if applicable."
+          },
+          "packagingGroup": {
+            "type": "string",
+            "example": null,
+            "description": "ADR packaging group (I, II, III), if applicable."
+          },
+          "transportCategory": {
+            "type": "string",
+            "example": "2",
+            "description": "ADR transport category."
+          },
+          "tunnelRestriction": {
+            "type": "string",
+            "example": "(E)",
+            "description": "Tunnel restriction code."
+          },
+          "adrVersion": {
+            "type": "string",
+            "example": "ADR2023",
+            "description": "ADR regulation version this data is based on."
+          },
+          "technicalNameForNotOtherwiseSpecifiedSubstances": {
+            "type": "string",
+            "example": "N.O.S.",
+            "description": "Technical name required for N.O.S. entries."
+          },
+          "pointsMultiplier": {
+            "type": "integer",
+            "example": 3,
+            "description": "Points multiplier used for the 1000-points calculation."
+          },
+          "isHighConsequencesDangerousGood": {
+            "type": "boolean",
+            "example": false,
+            "description": "True if this substance is classified as a high consequence dangerous good."
+          },
+          "isExemptedQuantityEligible": {
+            "type": "boolean",
+            "example": false,
+            "description": "True if this substance may be shipped as an exempted quantity."
+          },
+          "isLimitedQuantityEligible": {
+            "type": "boolean",
+            "example": true,
+            "description": "True if this substance may be shipped as a limited quantity."
+          }
+        }
+      },
+      "ResponseGetDangerousGoodAdrData": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Dangerous good ADR data.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DangerousGoodAdrData"
+              }
+            ]
+          },
+          "links": {
+            "$ref": "#/components/schemas/HateoasLink"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "X-API-KEY": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Documentation for customers.",
+    "url": "https://docs.cargoboard.com"
+  },
+  "x-readme": {
+    "explorer-enabled": true,
+    "proxy-enabled": true
+  }
+}

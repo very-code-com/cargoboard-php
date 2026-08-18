@@ -1,0 +1,116 @@
+name: Integration (Cargoboard sandbox)
+
+# Runs the integration suite against the real Cargoboard sandbox
+# (api-sandbox.cargoboard.com). Deliberately NOT part of the pull-request gate:
+#   - forks cannot read repository secrets, so the job would be useless there;
+#   - the suite places a real sandbox order, so it must not run once per push per
+#     PHP version.
+#
+# The key lives in the "cargoboard-sandbox" environment rather than in repository
+# secrets: only jobs that opt into that environment can read it, and only from the
+# branches its deployment policy allows. Set one value there:
+#   CARGOBOARD_API_KEY   (a SANDBOX key; Cargoboard issues separate keys per
+#                         environment, and a production key is rejected here with
+#                         403 exactly like an invalid one)
+# Without it the job reports "not configured" and stops; it never fails the build
+# for a missing secret.
+
+on:
+  push:
+    branches: ["master"]
+  schedule:
+    # 04:41 UTC daily, off the hour to avoid the top-of-hour runner rush.
+    - cron: "41 4 * * *"
+  workflow_dispatch:
+    inputs:
+      place_orders:
+        description: "Also run the tests that place real sandbox orders"
+        type: boolean
+        default: true
+
+# One run at a time: parallel runs share the same Cargoboard account.
+concurrency:
+  group: cargoboard-sandbox-integration
+  cancel-in-progress: false
+
+jobs:
+  integration:
+    name: Cargoboard sandbox
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: cargoboard-sandbox
+
+    permissions:
+      contents: read
+
+    env:
+      CARGOBOARD_SANDBOX: "1"
+      CARGOBOARD_API_KEY: ${{ secrets.CARGOBOARD_API_KEY }}
+      # The booking tests create a real order in the sandbox (nothing is executed
+      # and no truck is scheduled there). Never acceptable against a production key.
+      CARGOBOARD_ALLOW_ORDERS: ${{ github.event_name == 'workflow_dispatch' && inputs.place_orders == false && '0' || '1' }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check that a sandbox key is configured
+        id: creds
+        run: |
+          if [ -z "${CARGOBOARD_API_KEY}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Integration tests skipped::CARGOBOARD_API_KEY is not configured in the cargoboard-sandbox environment."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up PHP
+        if: steps.creds.outputs.configured == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, json
+          coverage: none
+
+      - name: Get Composer cache directory
+        if: steps.creds.outputs.configured == 'true'
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer downloads
+        if: steps.creds.outputs.configured == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        if: steps.creds.outputs.configured == 'true'
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # The sandbox drops connections under load: run the suite a few times in quick
+      # succession and it starts answering with connection resets, 10-second connect
+      # timeouts and "SSL_read: unexpected eof", on a different test each time and never
+      # with a failed assertion. Retrying the whole suite keeps that from producing a red
+      # nightly build, while a genuine regression still fails all three attempts.
+      #
+      # Assertion failures are not worth retrying, but PHPUnit's exit code cannot tell them
+      # apart from transport errors, so the log is the place to look: if the failures move
+      # around between attempts, it is the sandbox.
+      - name: Run integration tests
+        if: steps.creds.outputs.configured == 'true'
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Integration attempt ${attempt} of 3"
+            if vendor/bin/phpunit --testsuite integration --testdox; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            if [ "${attempt}" -lt 3 ]; then
+              echo "::warning title=Integration attempt ${attempt} failed::Retrying in 60s; the Cargoboard sandbox drops connections under load."
+              sleep 60
+            fi
+          done
+          echo "::error title=Integration suite failed::All three attempts failed. Check whether the failing tests are the same each time (a real regression) or different ones with transport errors (the sandbox)."
+          exit 1

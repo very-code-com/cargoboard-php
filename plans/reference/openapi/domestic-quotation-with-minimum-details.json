@@ -1,0 +1,77 @@
+{
+    "data": {
+        "id": "cm33264tt04i0qt0dluradaf6",
+        "costItems": [
+            {
+                "description": "Frachtkosten",
+                "type": "SHIPMENT",
+                "subtype": null,
+                "price": {
+                    "amount": 90.18,
+                    "currency": "EUR"
+                },
+                "pricePartVat": {
+                    "amount": 17.13,
+                    "percentage": 19,
+                    "currency": "EUR"
+                }
+            },
+            {
+                "description": "Klimaschutzbeitrag",
+                "type": "CLIMATE_COMPENSATION_SURCHARGE",
+                "subtype": null,
+                "price": {
+                    "amount": 0.67,
+                    "currency": "EUR"
+                },
+                "pricePartVat": {
+                    "amount": 0.13,
+                    "percentage": 19,
+                    "currency": "EUR"
+                }
+            }
+        ],
+        "pickupOn": "2024-12-11T07:00:00.000Z",
+        "pickupAtFrom": "2024-12-11T07:00:00.000Z",
+        "pickupAtUntil": "2024-12-11T15:00:00.000Z",
+        "price": {
+            "amount": 90.85,
+            "currency": "EUR",
+            "grossAmount": 108.11,
+            "vatAmount": 17.26
+        },
+        "priceStandard": {
+            "amount": 90.85,
+            "currency": "EUR"
+        },
+        "runtime": {
+            "daysMin": 1,
+            "daysMax": 2
+        },
+        "delivery": {
+            "earliest": "2024-12-12T07:00:00.000Z",
+            "latest": "2024-12-13T15:00:00.000Z"
+        },
+        "product": "STANDARD",
+        "transportType": "GROUPAGE",
+        "co2Emission": {
+            "amount": 0.67,
+            "value": 33.88,
+            "unit": "KG"
+        }
+    },
+    "links": [
+        {
+            "description": "Get another quotation.",
+            "href": "https://api.staging.cargoboard.com/v1/quotations",
+            "method": "POST",
+            "rel": "self"
+        },
+        {
+            "rel": "quotationBook",
+            "method": "POST",
+            "description": "Book transport based on this quotation.",
+            "href": "https://api.staging.cargoboard.com/v1/quotations/cm33264tt04i0qt0dluradaf6/book"
+        }
+    ]
+}

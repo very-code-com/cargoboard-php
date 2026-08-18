@@ -1,0 +1,31 @@
+{
+    "data": [
+        {
+            "id": "cm33264tt04i0qt0dluradaf6",
+            "sequence": 2200,
+            "product": "STANDARD",
+            "transportType": "GROUPAGE",
+            "status": "CREATED",
+            "orderId": "cm3328igs04jbqt0dluurnxyl",
+            "customerId": "3d0cbeba-13c0-480e-ba83-9f8347b57858",
+            "priceAmount": 90.85,
+            "priceCurrency": "EUR",
+            "runtimeDaysMin": 1,
+            "runtimeDaysMax": 2,
+            "linesWeight": 200,
+            "co2EmissionAmount": 0.67,
+            "co2EmissionValue": 33.88,
+            "co2EmissionUnit": "KG",
+            "createdAt": "2024-12-10T09:10:00.000Z",
+            "shipper": { "address": { "countryCode": "DE", "postCode": "10115", "city": "Berlin" }, "pickupOn": "2024-12-11" },
+            "consignee": { "address": { "countryCode": "DE", "postCode": "33100", "city": "Paderborn" } },
+            "lines": [
+                { "content": "furniture", "unitQuantity": 1, "unitPackageType": "EP", "unitLength": 120, "unitWidth": 80, "unitHeight": 120, "unitWeight": 200 }
+            ],
+            "costItems": [
+                { "type": "SHIPMENT", "subtype": null, "description": "Frachtkosten", "sellPrice": 90.18, "currency": "EUR", "isOnCustomerInvoice": true, "easybillInvoiceId": null, "vat": 17.13, "cost": 70.2 }
+            ]
+        }
+    ],
+    "total": 1
+}

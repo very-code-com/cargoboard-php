@@ -1,0 +1,25 @@
+{
+  "unNumber": "3480",
+  "properShippingName": "LITHIUM-IONEN-BATTERIEN",
+  "adrClass": "9",
+  "packingGroup": null,
+  "classificationCode": "M4",
+  "adrRelease": "012",
+  "labels": { "mainRisk": "9A", "subRisks": [] },
+  "tunnelRestriction": "(E)",
+  "limitedQuantityCode": "LQ00",
+  "limitedQuantityQuantityText": "0",
+  "exemptedQuantityType": "E0",
+  "packagingInstructions": "P903 P908 P909 P910 P911 LP903 LP904 LP905 LP906",
+  "generalSpecialRegulations": "188 230 310 348 376 377 387 636 677",
+  "flags": {
+    "limitedQuantity": true,
+    "highConsequenceDangerousGoods": false,
+    "notOtherwiseSpecifiedRequired": false,
+    "specialRegulation274": false,
+    "specialRegulation61": false,
+    "specialRegulation640": false,
+    "allowedInCentralCrossDock": true,
+    "allowedOnLineHaul": true
+  }
+}

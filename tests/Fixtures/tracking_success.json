@@ -1,0 +1,48 @@
+{
+    "data": {
+        "trackingSteps": [
+            { "sequence": 1, "type": "ACCEPTED", "code": "100", "status": "SUCCESS", "originatedAt": "2024-12-10T09:14:31.000Z" },
+            { "sequence": 2, "type": "DISPOSITION", "code": "300", "status": "SUCCESS", "originatedAt": "2024-12-10T14:02:00.000Z" },
+            { "sequence": 3, "type": "PICKED_UP", "code": "400", "status": "SUCCESS", "originatedAt": "2024-12-11T11:41:00.000Z" },
+            { "sequence": 4, "type": "DISPATCHED", "code": "500", "status": "SUCCESS", "originatedAt": "2024-12-11T20:15:00.000Z" },
+            { "sequence": 5, "type": "UNLOADED", "code": "550", "status": "WARNING", "originatedAt": "2024-12-12T05:30:00.000Z" },
+            { "sequence": 6, "type": "ON_A_WAY_TO_CONSIGNEE", "code": "620", "status": "PENDING", "originatedAt": null },
+            { "sequence": 7, "type": "DELIVERED", "code": "700", "status": "PENDING", "originatedAt": null }
+        ],
+        "statusEventHistory": [
+            {
+                "code": "400",
+                "originatedAt": "2024-12-11T11:41:00.000Z",
+                "label": "Sendung abgeholt",
+                "emittedBy": "0163",
+                "source": "CARGOBOARD",
+                "estimatedCollectionAtFrom": "2024-12-11T07:00:00.000Z",
+                "estimatedCollectionAtUntil": "2024-12-11T15:00:00.000Z",
+                "estimatedDeliveryAtFrom": "2024-12-13T08:00:00.000Z",
+                "estimatedDeliveryAtUntil": "2024-12-13T16:00:00.000Z",
+                "stopsUntilCollection": 0,
+                "location": {
+                    "role": "shippingPartner",
+                    "depotId": "0163",
+                    "name": "Depot Halver",
+                    "address": { "postCode": "58553", "city": "Halver", "countryCode": "DE", "latitude": 51.1889, "longitude": 7.4983 }
+                },
+                "createdAt": "2024-12-11T11:41:12.000Z"
+            },
+            {
+                "code": "550",
+                "originatedAt": "2024-12-12T05:30:00.000Z",
+                "label": "Sendung entladen",
+                "message": "Sendung verspätet entladen",
+                "emittedBy": "0250",
+                "source": "CARGOBOARD",
+                "estimatedDeliveryAtFrom": "2024-12-13T10:00:00.000Z",
+                "estimatedDeliveryAtUntil": "2024-12-13T18:00:00.000Z",
+                "stopsUntilDelivery": 12,
+                "vehicleLatitude": 48.8234,
+                "vehicleLongitude": 11.3421,
+                "location": { "role": "deliveringPartner", "depotId": "0250", "name": "Depot Ingolstadt" }
+            }
+        ]
+    }
+}

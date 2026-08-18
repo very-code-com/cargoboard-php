@@ -1,0 +1,4 @@
+{
+    "data": { "status": "CANCELLED", "message": "Order has been cancelled." },
+    "links": [{ "rel": "self", "method": "GET", "description": "Order.", "href": "https://api-sandbox.cargoboard.com/v1/orders/cm3328igs04jbqt0dluurnxyl" }]
+}

@@ -1,0 +1,36 @@
+# Cargoboard | Your Digital Freight Forwarder in Europe Documentation
+
+> Automate your shipping process with Cargoboard 🚚🚀 Our API enables easy information flows between Cargoboard and your internal supply chain systems — including your company’s ERP or WMS — to save time, reduce errors, and improve decision-making across your supply chain.  Here, you have access to our growing collection of public APIs to gather data throughout the shipment lifecycle, from purchase order creation and real-time shipment tracking to invoicing.
+
+## Guides
+- [Cargoboard API](https://docs.cargoboard.com/docs/usage.md): Automate your shipping process with Cargoboard 🚚
+
+## API Reference
+- [Authentification 🔐](https://docs.cargoboard.com/reference/getting-started-with-your-api-1.md): The page shows how you can authenticate for our API.
+- [Test and Production System 💻](https://docs.cargoboard.com/reference/test-and-production-system.md): The page shows how you can authenticate for our API.
+- [Provide Shipper and Consignee Information 🌍](https://docs.cargoboard.com/reference/address-fields.md): For your Quotations and Bookings you have to provide address information and some information about the shipper and the consignee. More details here ⬇️
+- [Package types and measurement 📦](https://docs.cargoboard.com/reference/lines-packagetypes-and-content.md): For your Quotations and Bookings you have to provide information of your goods. More details here ⬇️
+- [Dangerous Goods ⚠](https://docs.cargoboard.com/reference/dangerous-goods.md)
+- [Book via loading meter (ldm) 📏](https://docs.cargoboard.com/reference/how-to-book-lademeter-ldm.md): For large part-load shipments you don't have to list every single pallet.
+- [Parcel Shipments 📦](https://docs.cargoboard.com/reference/book-parcel-shipments.md)
+- [Shipment Products 🚚](https://docs.cargoboard.com/reference/choose-transport-type.md): For your Quotations and Bookings you have to select the correct product / shipment type. More details here ⬇️
+- [Van/Truck Product 🚛](https://docs.cargoboard.com/reference/vantruck-product.md): For Quotations and Bookings of van or truck you have to select correct vehicle type. More details here ⬇️
+- [Error Messages 🚨](https://docs.cargoboard.com/reference/error-messages.md)
+- [Track & Trace / Shipment Status 🚛](https://docs.cargoboard.com/reference/track-trace-shipment-status.md)
+- [Share a tracking link with your customers 🔗](https://docs.cargoboard.com/reference/share-a-tracking-link-with-your-customers.md)
+- [Quotation with minimum details](https://docs.cargoboard.com/reference/domestic-quotation-with-minimum-details.md)
+- [Booking with minimum details](https://docs.cargoboard.com/reference/domestic-quotation-with-minimum-details-1.md)
+- [Place a Quotation](https://docs.cargoboard.com/reference/place-a-quotation.md): This endpoint is used to place a Quotation for a shipment.
+- [Get quotations](https://docs.cargoboard.com/reference/get-quotations.md): This endpoint is used to Get quotations.
+- [Get a Quotation](https://docs.cargoboard.com/reference/get-a-quotation.md): Authorization with x-api-key.
+- [Book an Order Based on a Quotation](https://docs.cargoboard.com/reference/book-an-order-based-on-a-quotation.md): This endpoint is used to Book an Order Based on a Quotation.
+- [Place an Order](https://docs.cargoboard.com/reference/place-an-order.md): Authorization with customer token (XApiKey) or user token (Bearer). Orders placed on this endpoint need confirmation for authorization different than wih XApiKey that is customers tokenApi.
+- [Get orders](https://docs.cargoboard.com/reference/get-orders.md): This endpoint is used to Get orders.
+- [Get an Order](https://docs.cargoboard.com/reference/get-an-order.md): Authorization with x-api-key.
+- [Cancel an Order](https://docs.cargoboard.com/reference/cancel-an-order.md): Authorization with customer token (XApiKey) or user token (Bearer). Header x-api-key required as cancellation token. For value of id parameter, CUID or reference of order are accepted.
+- [Print shipment label for an Order](https://docs.cargoboard.com/reference/print-shipment-label-for-an-order.md): Authorization with customer token (XApiKey) or user token (Bearer). For value of id parameter, CUID or reference of order are accepted.
+- [Print confirmation for an Order](https://docs.cargoboard.com/reference/print-confirmation-for-an-order.md): Authorization with customer token (XApiKey) or user token (Bearer). For value of id parameter, CUID or reference of order are accepted.
+- [Get tracking information for an Order](https://docs.cargoboard.com/reference/get-tracking-information-for-an-order.md): Authorization with customer token (XApiKey) or user token (Bearer). For value of id parameter, CUID or reference of order are accepted.
+- [Get invoices](https://docs.cargoboard.com/reference/get-invoices.md): This endpoint is used to Get invoices.
+- [Prints invoice pdf document](https://docs.cargoboard.com/reference/prints-invoice-pdf-document.md): Authorization with API_CARGOBOARD_TOKEN OR JWT Token.
+- [Get dangerous goods ADR data by UN number](https://docs.cargoboard.com/reference/get-dangerous-good-adr-data-by-un-number.md): This endpoint is used to look up ADR reference data (hazard classification, packaging group, tunnel restriction, etc.) for a given UN number.

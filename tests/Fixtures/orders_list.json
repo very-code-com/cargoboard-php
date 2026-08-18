@@ -1,0 +1,121 @@
+{
+    "data": [
+        {
+            "id": "cm3328igs04jbqt0dluurnxyl",
+            "reference": "10374504",
+            "sequence": 4711,
+            "product": "STANDARD",
+            "transportType": "GROUPAGE",
+            "status": "CREATED",
+            "shipmentStatus": "TRANSIT",
+            "customerId": "3d0cbeba-13c0-480e-ba83-9f8347b57858",
+            "customerOrderCode": "XYZ-1568788",
+            "quotationId": "cm33264tt04i0qt0dluradaf6",
+            "incoterm": "STANDARD",
+            "wantsInsurance": true,
+            "wantsClimateContribution": true,
+            "valueOfGoodsAmount": 3000,
+            "valueOfGoodsCurrency": "EUR",
+            "paymentMethod": "INVOICE",
+            "tariffCategory": "B",
+            "shippingPartner": "0163",
+            "deliveringPartner": "0250",
+            "priceAmount": 94.93,
+            "priceCurrency": "EUR",
+            "priceAmountStandard": 99.5,
+            "actualPrice": 96.1,
+            "grossActualPrice": 114.36,
+            "runtimeDaysMin": 1,
+            "runtimeDaysMax": 2,
+            "linesWeight": 200,
+            "linesVolume": 1.152,
+            "linesPalletBays": 1,
+            "linesLoadingMeter": 0.4,
+            "co2EmissionAmount": 0.7,
+            "co2EmissionValue": 35.58,
+            "co2EmissionUnit": "KG",
+            "isConfirmationNeeded": false,
+            "isConfirmed": true,
+            "confirmedAt": "2024-12-10T09:15:00.000Z",
+            "placedAt": "2024-12-10T09:14:31.000Z",
+            "createdAt": "2024-12-10T09:14:30.000Z",
+            "updatedAt": "2024-12-12T06:02:11.000Z",
+            "shipper": {
+                "name": "Mustermann GmbH",
+                "address": { "street": "Ostrstr. 24", "countryCode": "DE", "postCode": "58553", "city": "Halver" },
+                "contactPerson": { "name": "Mr. Skywalker", "phone": "+4917287502631", "email": "orders@not-existing-company.com" },
+                "pickupOn": "2024-12-11",
+                "wantsTailLiftTruck": true
+            },
+            "consignee": {
+                "name": "Fabian Müller",
+                "address": { "street": "Hofstetterstr. 4", "countryCode": "DE", "postCode": "85137", "city": "Walting" },
+                "isPrivateCustomer": true,
+                "wantsPhoneCallFromDriverBeforeDelivery": true
+            },
+            "lines": [
+                {
+                    "content": "Werkzeugmaschine",
+                    "unitQuantity": 2,
+                    "unitPackageType": "FP",
+                    "unitLength": 120,
+                    "unitWidth": 80,
+                    "unitHeight": 120,
+                    "unitWeight": 100,
+                    "isStackable": false,
+                    "wantsPalletExchange": true,
+                    "volume": 1.152,
+                    "palletBays": 1,
+                    "loadingMeter": 0.4,
+                    "barcodes": [
+                        { "id": "bc1", "sequence": 1, "value": "103745040001" },
+                        { "id": "bc2", "sequence": 2, "value": "103745040002" }
+                    ]
+                }
+            ],
+            "costItems": [
+                {
+                    "type": "SHIPMENT",
+                    "subtype": null,
+                    "description": "Frachtkosten",
+                    "sellPrice": 94.23,
+                    "currency": "EUR",
+                    "isOnCustomerInvoice": true,
+                    "easybillInvoiceId": "inv-1",
+                    "vat": 17.9,
+                    "sequence": 1
+                },
+                {
+                    "type": "TAIL_LIFT_TRUCK",
+                    "subtype": "TAIL_LIFT_PICKUP",
+                    "description": "Hebebühne Abholung",
+                    "sellPrice": 25,
+                    "currency": "EUR",
+                    "isOnCustomerInvoice": true,
+                    "easybillInvoiceId": "inv-1",
+                    "vat": 4.75,
+                    "sequence": 2
+                }
+            ],
+            "easybillInvoices": [
+                {
+                    "sequence": 900,
+                    "documentId": 12345,
+                    "documentNumber": "RE-2024-0815",
+                    "documentAmount": 114.36,
+                    "paymentAmount": 114.36,
+                    "paymentCurrency": "EUR",
+                    "isDocumentCancelled": false,
+                    "cancellationDocumentId": null,
+                    "isPaid": false,
+                    "dueDate": "2024-12-24T00:00:00.000Z",
+                    "dueInDays": 14,
+                    "orders": [{ "id": "cm3328igs04jbqt0dluurnxyl" }],
+                    "customer": { "id": "3d0cbeba-13c0-480e-ba83-9f8347b57858" }
+                }
+            ]
+        }
+    ],
+    "links": [{ "rel": "self", "method": "GET", "description": "Orders.", "href": "https://api-sandbox.cargoboard.com/v1/orders" }],
+    "total": 137
+}

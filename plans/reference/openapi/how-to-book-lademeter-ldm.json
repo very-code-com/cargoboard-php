@@ -1,0 +1,29 @@
+{
+    "product": "STANDARD",
+    "shipper": {
+        "address": {
+            "postCode": "40239",
+            "countryCode": "DE",
+            "city": "Düsseldorf"
+        }
+    },
+    "consignee": {
+        "address": {
+            "countryCode": "DE",
+            "postCode": "41061",
+            "city": "Mönchengladbach"
+        }
+    },
+    "lines": [
+        {
+            "unitQuantity": 1,
+            "unitPackageType": "PARTIE",
+            "content": "goods",
+            "unitLength": 720,
+            "unitWidth": 240,
+            "unitHeight": 250,
+            "unitWeight": 5800,
+            "wantsPalletExchange": false
+        }
+    ]
+}

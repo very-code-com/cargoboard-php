@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "sequence": 900,
+            "documentId": 12345,
+            "documentNumber": "RE-2024-0815",
+            "documentAmount": 114.36,
+            "paymentAmount": 114.36,
+            "paymentCurrency": "EUR",
+            "isDocumentCompleted": true,
+            "documentCompletedAt": "2024-12-10T10:00:00.000Z",
+            "isDocumentSent": true,
+            "documentSentAt": "2024-12-10T10:05:00.000Z",
+            "isDocumentCancelled": false,
+            "cancellationDocumentId": null,
+            "isPaid": false,
+            "dueDate": "2024-12-24T00:00:00.000Z",
+            "dueInDays": 14,
+            "isDone": false,
+            "orders": [{ "id": "cm3328igs04jbqt0dluurnxyl" }],
+            "customer": { "id": "3d0cbeba-13c0-480e-ba83-9f8347b57858" }
+        },
+        {
+            "sequence": 901,
+            "documentId": 12346,
+            "documentNumber": "RE-2024-0816",
+            "documentAmount": 55.1,
+            "paymentAmount": 55.1,
+            "paymentCurrency": "EUR",
+            "isDocumentCancelled": true,
+            "documentCancelledAt": "2024-12-11T08:00:00.000Z",
+            "cancellationDocumentId": 12999,
+            "isPaid": true,
+            "paidAt": "2024-12-11T07:00:00.000Z",
+            "orders": [{ "id": "cm3328igs04jbqt0dluurnxym" }],
+            "customer": { "id": "3d0cbeba-13c0-480e-ba83-9f8347b57858" }
+        }
+    ],
+    "total": 2
+}

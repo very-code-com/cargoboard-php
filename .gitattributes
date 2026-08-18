@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+# Keep the Composer dist to what a consumer actually needs: src/, examples/ and
+# the docs. Everything below is development infrastructure.
+/.github            export-ignore
+/tests              export-ignore
+/plans              export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/phpunit.xml        export-ignore
+/phpstan.neon       export-ignore

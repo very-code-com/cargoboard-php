@@ -1,0 +1,18 @@
+{
+    "data": {
+        "trackingSteps": [
+            { "sequence": 1, "type": "ACCEPTED", "code": "100", "status": "SUCCESS", "originatedAt": "2024-12-10T09:14:31.000Z" },
+            { "sequence": 7, "type": "DELIVERED", "code": "700", "status": "SUCCESS", "originatedAt": "2024-12-13T11:05:00.000Z" }
+        ],
+        "statusEventHistory": [
+            {
+                "code": "700",
+                "originatedAt": "2024-12-13T11:05:00.000Z",
+                "label": "Sendung zugestellt",
+                "nameOfSigner": "F. Müller",
+                "causedBy": "POD_UPLOADED",
+                "source": "CARGOBOARD"
+            }
+        ]
+    }
+}

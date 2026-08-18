@@ -1,0 +1,40 @@
+{
+    "name": "very-code-com/cargoboard-php",
+    "description": "PHP client for the Cargoboard REST API (quotations, bookings, labels, tracking, invoices, ADR data). Groupage, LTL, FTL, parcel and dangerous-goods shipments across Europe.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "keywords": ["cargoboard", "logistics", "freight", "shipping", "ltl", "ftl", "groupage", "adr", "rest", "api", "client"],
+    "homepage": "https://github.com/very-code-com/cargoboard-php",
+    "authors": [
+        {
+            "name": "Very Code",
+            "homepage": "https://very-code.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "psr/log": "^2.0|^3.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^10.5|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "VeryCodeCom\\Cargoboard\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VeryCodeCom\\Cargoboard\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

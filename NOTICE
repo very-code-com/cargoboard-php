@@ -1,0 +1,14 @@
+cargoboard-php
+PHP client for the Cargoboard REST API
+
+Copyright 2026 Very Code
+Homepage: https://very-code.com
+Repository: https://github.com/very-code-com/cargoboard-php
+
+This product provides an open-source PHP client for the Cargoboard API, covering
+quotations, bookings (direct and quotation-based), order cancellation, shipment
+label and confirmation PDFs, track & trace, invoices and ADR/dangerous-goods
+master data, for groupage, LTL, FTL, loading-metre and parcel shipments.
+
+Licensed under the Apache License, Version 2.0.
+You must retain this NOTICE file in any redistribution or derivative work.

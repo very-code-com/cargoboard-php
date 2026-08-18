@@ -1,0 +1,16 @@
+{
+    "data": {
+        "unNo": "3480",
+        "substanceName": "LITHIUM-IONEN-BATTERIEN",
+        "classificationCode": "M4",
+        "riskMain": "9A",
+        "packagingGroup": null,
+        "transportCategory": "2",
+        "tunnelRestriction": "(E)",
+        "adrVersion": "ADR2023",
+        "pointsMultiplier": 3,
+        "isHighConsequencesDangerousGood": false,
+        "isExemptedQuantityEligible": false,
+        "isLimitedQuantityEligible": true
+    }
+}

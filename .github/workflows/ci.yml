@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  push:
+    branches: ["master", "develop"]
+  pull_request:
+  workflow_dispatch:
+
+# The workflow only ever reads the repository; nothing here publishes or comments.
+permissions:
+  contents: read
+
+# A new push to the same branch makes the previous run pointless. Never cancel on master:
+# those runs are the ones people go back and look at.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}, ${{ matrix.deps }} deps
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.2", "8.3", "8.4"]
+        deps: ["highest"]
+        include:
+          # The composer constraints are a promise to consumers, so verify the floor of that
+          # promise too: psr/log 2.0.0 and the oldest PHPUnit the package claims to support.
+          # Without this leg a constraint could drift upward and nobody would notice until an
+          # install in a conservative project broke.
+          - php: "8.2"
+            deps: "lowest"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, json
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.deps }}-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.deps }}-
+
+      - name: Install dependencies (highest)
+        if: matrix.deps == 'highest'
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install dependencies (lowest)
+        if: matrix.deps == 'lowest'
+        run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-progress --no-interaction
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --testsuite unit
+
+      # The examples are part of the documentation; a broken one is a broken doc.
+      - name: Lint examples
+        run: find examples -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      # 08, 09 and 10 need neither an API key nor a network, so CI can actually run them.
+      - name: Run offline examples
+        run: |
+          php examples/08_di_and_testing.php > /dev/null
+          php examples/09_validation_and_errors.php > /dev/null
+          php examples/10_webhook_endpoint.php > /dev/null
+
+  analyse:
+    name: PHPStan (level 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, json
+          coverage: none
+
+      # --check-lock is the point of this on a library: composer.lock is not shipped to
+      # consumers, but a lock that has drifted from composer.json means CI is testing a
+      # different dependency set than the one declared.
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict --check-lock --no-interaction
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Cache PHPStan result cache
+        uses: actions/cache@v6
+        with:
+          path: /tmp/phpstan-cache-cargoboard-php
+          key: phpstan-${{ runner.os }}-${{ hashFiles('src/**/*.php', 'phpstan.neon') }}
+          restore-keys: phpstan-${{ runner.os }}-
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --error-format=github
+
+  security:
+    name: Composer audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, json
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # The runtime dependency surface is tiny (psr/log), so this is mostly about the dev
+      # toolchain and about noticing the day that changes. --locked audits what CI actually
+      # installed rather than re-resolving.
+      - name: Audit dependencies for known advisories
+        run: composer audit --locked --no-interaction
+
+  coverage:
+    name: Line coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, json
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run unit tests with coverage
+        run: vendor/bin/phpunit --testsuite unit --coverage-clover=coverage.xml
+
+      # Floor, not a target. Unit coverage sits around 90%; 85% leaves room for honest
+      # refactoring while still failing if a chunk of the client stops being exercised.
+      # The uncovered remainder is mostly error branches that need a live API to reach.
+      - name: Enforce the coverage floor
+        run: |
+          php -r '
+            $minimum = 85.0;
+            $xml = simplexml_load_file("coverage.xml");
+            if ($xml === false) { fwrite(STDERR, "coverage.xml is unreadable\n"); exit(1); }
+            $metrics = $xml->project->metrics;
+            $statements = (int) $metrics["statements"];
+            $covered = (int) $metrics["coveredstatements"];
+            if ($statements === 0) { fwrite(STDERR, "no statements measured\n"); exit(1); }
+            $percent = $covered / $statements * 100;
+            printf("Line coverage: %.2f%% (%d/%d), floor %.2f%%\n", $percent, $covered, $statements, $minimum);
+            if ($percent < $minimum) {
+              printf("::error title=Coverage below floor::%.2f%% is under the %.2f%% floor\n", $percent, $minimum);
+              exit(1);
+            }
+          '

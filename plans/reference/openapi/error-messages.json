@@ -1,0 +1,7 @@
+{
+    "statusCode": 422,
+    "message": [
+        "shipper.address.countryCode must be one of the following values: AL, AT, BE, BG, CH, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IT, LI, LT, LU, LV, NL, NO, SI, PL, PT, RS, RO, SE, SK, TR"
+    ],
+    "error": "Unprocessable Entity"
+}

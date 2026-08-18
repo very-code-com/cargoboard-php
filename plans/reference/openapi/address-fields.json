@@ -1,0 +1,17 @@
+{
+    "shipper": {
+        "address": {
+            "countryCode": "DE",
+            "postCode": "10115",
+            "city": "Berlin"
+        },
+        "pickupOn": "2022-12-23"
+    },
+    "consignee": {
+        "address": {
+            "countryCode": "DE",
+            "postCode": "10115",
+            "city": "Berlin"
+        }
+    }
+}
