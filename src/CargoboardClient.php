@@ -175,6 +175,23 @@ final class CargoboardClient
         return $this->validator->validate($request, $mode, $parcelMode ?? $this->config->parcelMode);
     }
 
+    /**
+     * Rules that do not fail a booking but should be seen: things Cargoboard accepts over the
+     * API and then sorts out by hand, such as a private consignee booked without either
+     * `wantsContactBeforeDelivery` or `wantsDeliveryWithoutConsigneePresence`.
+     *
+     * These are never thrown. Every quotation and booking logs them at warning level; call this
+     * to show them next to a form, or to fail a batch on your own terms.
+     *
+     * @return list<string> Warning messages; an empty array means nothing to flag.
+     */
+    public function warningsFor(
+        ShipmentRequest $request,
+        ValidationMode $mode = ValidationMode::Order,
+    ): array {
+        return $this->validator->warnings($request, $mode);
+    }
+
     // -----------------------------------------------------------------
     // Quotations
     // -----------------------------------------------------------------
@@ -418,9 +435,19 @@ final class CargoboardClient
     /**
      * Fetch tracking data (`GET /v1/orders/{id}/tracking`), by CUID or shipment reference.
      *
-     * Returns both views at once: the milestone chain and the raw status event history. For
-     * push updates instead of polling, ask Cargoboard to register a Track & Trace webhook and
-     * parse its payloads with {@see \VeryCodeCom\Cargoboard\Webhook\WebhookEvent}.
+     * Returns both views at once: the milestone chain and the raw status event history. The
+     * result carries the feed twice, on purpose:
+     *
+     *   $tracking->events              // raw, exactly as the API sent it
+     *   $tracking->timeline()          // deduplicated on the event id, oldest first
+     *   $event->describe()             // a display line, never a bare status number
+     *
+     * Take `events` when you need the untouched response, `timeline()` when you are about to
+     * store or render it - the raw feed repeats notification events that share a timestamp.
+     *
+     * For push updates instead of polling, ask Cargoboard to register a Track & Trace webhook
+     * and parse its payloads with {@see \VeryCodeCom\Cargoboard\Webhook\WebhookEvent}, which
+     * offers the same `describe()`.
      *
      * @throws CargoboardNotFoundException  if no such order exists on this account.
      * @throws CargoboardApiException|CargoboardTransportException|CargoboardResponseParseException
@@ -529,6 +556,12 @@ final class CargoboardClient
 
         if ($errors !== []) {
             $this->fail(new CargoboardValidationException($errors));
+        }
+
+        // Warnings are logged, never thrown: they flag bookings Cargoboard accepts and then
+        // fixes operationally, so refusing them here would be this library overruling the API.
+        foreach ($this->validator->warnings($request, $mode) as $warning) {
+            $this->logger->warning('Cargoboard: ' . $warning);
         }
     }
 

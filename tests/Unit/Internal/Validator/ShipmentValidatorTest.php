@@ -103,8 +103,8 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupAtFrom: ShipmentFactory::PICKUP_DATE . 'T08:00:00Z',
-                pickupAtUntil: ShipmentFactory::PICKUP_DATE . 'T14:00:00Z',
+                pickupAtFrom: ShipmentFactory::pickupDate() . 'T08:00:00Z',
+                pickupAtUntil: ShipmentFactory::pickupDate() . 'T14:00:00Z',
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -125,7 +125,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: ShipmentFactory::WEEKEND_DATE,
+                pickupOn: ShipmentFactory::weekendDate(),
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -144,7 +144,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: ShipmentFactory::PICKUP_DATE,
+                pickupOn: ShipmentFactory::pickupDate(),
                 pickupAtFrom: '2026-08-19T08:00:00Z',
                 pickupAtUntil: '2026-08-19T14:00:00Z',
             ),
@@ -165,8 +165,8 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupAtFrom: ShipmentFactory::PICKUP_DATE . 'T16:00:00Z',
-                pickupAtUntil: ShipmentFactory::PICKUP_DATE . 'T08:00:00Z',
+                pickupAtFrom: ShipmentFactory::pickupDate() . 'T16:00:00Z',
+                pickupAtUntil: ShipmentFactory::pickupDate() . 'T08:00:00Z',
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -185,7 +185,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupAtFrom: ShipmentFactory::PICKUP_DATE . 'T08:00:00Z',
+                pickupAtFrom: ShipmentFactory::pickupDate() . 'T08:00:00Z',
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -201,7 +201,7 @@ final class ShipmentValidatorTest extends TestCase
 
     public function testDeliveryOnIsRejectedOnANonFixProduct(): void
     {
-        $request = $this->withDeliveryOn(Product::Standard, ShipmentFactory::DELIVERY_DATE);
+        $request = $this->withDeliveryOn(Product::Standard, ShipmentFactory::deliveryDate());
 
         $this->assertHasError('consignee.deliveryOn may only be set for a FIX product', $request);
     }
@@ -209,7 +209,7 @@ final class ShipmentValidatorTest extends TestCase
     #[DataProvider('fixProducts')]
     public function testDeliveryOnIsAcceptedOnEveryFixProduct(Product $product): void
     {
-        self::assertSame([], $this->validate($this->withDeliveryOn($product, ShipmentFactory::DELIVERY_DATE)));
+        self::assertSame([], $this->validate($this->withDeliveryOn($product, ShipmentFactory::deliveryDate())));
     }
 
     /** @return iterable<string, array{Product}> */
@@ -231,7 +231,7 @@ final class ShipmentValidatorTest extends TestCase
 
     public function testWeekendDeliveryIsRejected(): void
     {
-        $request = $this->withDeliveryOn(Product::Fix, ShipmentFactory::WEEKEND_DATE);
+        $request = $this->withDeliveryOn(Product::Fix, ShipmentFactory::weekendDate());
 
         $this->assertHasError('consignee.deliveryOn must be a weekday', $request);
     }
@@ -243,7 +243,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: ShipmentFactory::PICKUP_DATE,
+                pickupOn: ShipmentFactory::pickupDate(),
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -260,7 +260,7 @@ final class ShipmentValidatorTest extends TestCase
     {
         $request = new ShipmentRequest(
             product: Product::Standard,
-            shipper: new Shipper(address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'), name: 'X', pickupOn: ShipmentFactory::PICKUP_DATE),
+            shipper: new Shipper(address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'), name: 'X', pickupOn: ShipmentFactory::pickupDate()),
             consignee: new Consignee(address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'), name: 'Y'),
             lines: [],
         );
@@ -445,7 +445,7 @@ final class ShipmentValidatorTest extends TestCase
     {
         $request = new ShipmentRequest(
             product: Product::Standard,
-            shipper: new Shipper(address: new Address('00-001', CountryCode::PL, 'Warszawa', 'ul. Testowa 1'), name: 'Nadawca', pickupOn: ShipmentFactory::PICKUP_DATE),
+            shipper: new Shipper(address: new Address('00-001', CountryCode::PL, 'Warszawa', 'ul. Testowa 1'), name: 'Nadawca', pickupOn: ShipmentFactory::pickupDate()),
             consignee: new Consignee(address: new Address('1000', CountryCode::AT, 'Wien', 'Teststrasse 1'), name: 'Empfänger'),
             lines: [ShipmentFactory::parcelLine()],
         );
@@ -457,7 +457,7 @@ final class ShipmentValidatorTest extends TestCase
     {
         $export = new ShipmentRequest(
             product: Product::Standard,
-            shipper: new Shipper(address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'), name: 'Nadawca', pickupOn: ShipmentFactory::PICKUP_DATE),
+            shipper: new Shipper(address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'), name: 'Nadawca', pickupOn: ShipmentFactory::pickupDate()),
             consignee: new Consignee(address: new Address('00-001', CountryCode::PL, 'Warszawa', 'ul. Testowa 1'), name: 'Odbiorca'),
             lines: [ShipmentFactory::parcelLine()],
         );
@@ -484,7 +484,7 @@ final class ShipmentValidatorTest extends TestCase
                 address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'),
                 name: 'Producer ABC GmbH',
                 neutralData: new NeutralData('Selling Company ABC GmbH', 'Friedrichstraße 1', '10115', 'Berlin', CountryCode::DE),
-                pickupOn: ShipmentFactory::PICKUP_DATE,
+                pickupOn: ShipmentFactory::pickupDate(),
             ),
             consignee: new Consignee(address: new Address('41061', CountryCode::DE, 'Mönchengladbach', 'Examplestreet 5'), name: 'Consignee ABC AG'),
             lines: [$line],
@@ -500,7 +500,7 @@ final class ShipmentValidatorTest extends TestCase
     {
         $request = new ShipmentRequest(
             product: Product::Standard,
-            shipper: new Shipper(address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'), name: 'A', pickupOn: ShipmentFactory::PICKUP_DATE),
+            shipper: new Shipper(address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'), name: 'A', pickupOn: ShipmentFactory::pickupDate()),
             consignee: new Consignee(address: new Address('41061', CountryCode::DE, 'Mönchengladbach', 'Examplestreet 5'), name: 'B'),
             lines: [ShipmentFactory::parcelLine()],
             wantsInsurance: true,
@@ -524,7 +524,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: ShipmentFactory::PICKUP_DATE,
+                pickupOn: ShipmentFactory::pickupDate(),
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -544,7 +544,7 @@ final class ShipmentValidatorTest extends TestCase
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: ShipmentFactory::PICKUP_DATE,
+                pickupOn: ShipmentFactory::pickupDate(),
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),

@@ -19,6 +19,13 @@ use VeryCodeCom\Cargoboard\Internal\Json\Value;
  *  - `isPrivateCustomer` must be true for B2C deliveries. It changes both the price (a private
  *    delivery surcharge appears in the breakdown) and how the delivery is run.
  *
+ * On that last one, from Cargoboard support after a live B2C booking: `isPrivateCustomer` alone
+ * is **not sufficient**. A private delivery must also set either `wantsContactBeforeDelivery`
+ * (Cargoboard rings ahead to agree a slot) or `wantsDeliveryWithoutConsigneePresence` (the goods
+ * may be left), or it runs into trouble at the delivery depot. The API accepts the booking
+ * without either and nothing in the response says so, so the client logs a warning instead;
+ * see {@see \VeryCodeCom\Cargoboard\CargoboardClient::warningsFor()}.
+ *
  * @see https://docs.cargoboard.com/reference/address-fields
  */
 final class Consignee

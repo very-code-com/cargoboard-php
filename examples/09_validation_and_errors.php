@@ -6,6 +6,7 @@
  * Demonstrates:
  *   - each documented business rule the client checks before sending anything
  *   - the difference between quotation rules and booking rules
+ *   - warnings: what the API accepts but a depot then has to sort out by hand
  *   - which exception to catch for which failure, and what each one carries
  *
  * No API key and no network are needed: every rule below is enforced locally,
@@ -215,6 +216,44 @@ $report('A parcel with a neutral address and 25 units', $parcels->validateLocall
     ),
     consignee: $fullConsignee,
     lines: [new Line('Spare parts', 25, PackageType::Carton, 40, 30, 20, 5.0)],
+)));
+
+// ---------------------------------------------------------------------------
+// Warnings: rules Cargoboard enforces operationally rather than with a 422.
+// The API accepts these bookings and a human sorts them out afterwards, so the
+// client logs them at warning level instead of throwing. warningsFor() returns
+// them if you want to show them next to a form.
+// ---------------------------------------------------------------------------
+echo "\n=== Warnings (accepted by the API, but worth seeing) ===\n";
+
+$privateConsignee = new Consignee(
+    address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
+    name: 'Fabian Müller',
+    isPrivateCustomer: true,
+);
+
+$b2cRequest = new ShipmentRequest(
+    product: Product::Standard,
+    shipper: $fullShipper,
+    consignee: $privateConsignee,
+    lines: [$pallet],
+);
+
+// Locally valid - and this is what a live booking looked like before Cargoboard
+// support pointed out what was missing.
+$report('A B2C booking, as the validator sees it', $client->validateLocally($b2cRequest));
+$report('The same booking, as warningsFor() sees it', $client->warningsFor($b2cRequest));
+
+$report('With an appointment call arranged', $client->warningsFor(new ShipmentRequest(
+    product: Product::Standard,
+    shipper: $fullShipper,
+    consignee: new Consignee(
+        address: $privateConsignee->address,
+        name: $privateConsignee->name,
+        isPrivateCustomer: true,
+        wantsContactBeforeDelivery: true,
+    ),
+    lines: [$pallet],
 )));
 
 // ---------------------------------------------------------------------------

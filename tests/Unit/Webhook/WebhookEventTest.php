@@ -91,6 +91,30 @@ final class WebhookEventTest extends TestCase
         self::assertNull($event->originatedAt);
     }
 
+    public function testDescribeRendersTheSameLineAsTheTrackingEndpointDoes(): void
+    {
+        $labelled = WebhookEvent::fromArray(['event' => ['statusCode' => '400', 'label' => 'Sendung abgeholt']]);
+        self::assertSame('Sendung abgeholt', $labelled->describe());
+
+        // A webhook event without text falls back to its windows, exactly as a polled one does.
+        $estimates = WebhookEvent::fromArray(['event' => [
+            'statusCode'                 => '540',
+            'estimatedCollectionAtFrom'  => '2026-08-18T07:00:00.000Z',
+            'estimatedCollectionAtUntil' => '2026-08-18T15:00:00.000Z',
+            'estimatedDeliveryAtFrom'    => '2026-08-19T06:00:00.000Z',
+            'estimatedDeliveryAtUntil'   => '2026-08-21T14:00:00.000Z',
+        ]]);
+
+        self::assertTrue($estimates->hasEstimates());
+        self::assertSame('18.08.2026 07:00-15:00', $estimates->pickupWindow()?->format());
+        self::assertSame(
+            'Estimates updated: collection 18.08.2026 07:00-15:00, delivery 19.08.2026 06:00 - 21.08.2026 14:00',
+            $estimates->describe(),
+        );
+
+        self::assertSame('Status 900', WebhookEvent::fromArray(['event' => ['statusCode' => '900']])->describe());
+    }
+
     public function testMalformedJsonIsReportedAsAParseException(): void
     {
         $this->expectException(CargoboardResponseParseException::class);

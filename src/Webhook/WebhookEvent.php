@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace VeryCodeCom\Cargoboard\Webhook;
 
+use VeryCodeCom\Cargoboard\Dto\TrackingWindow;
 use VeryCodeCom\Cargoboard\Exception\CargoboardResponseParseException;
+use VeryCodeCom\Cargoboard\Internal\Format\EventNarrative;
 use VeryCodeCom\Cargoboard\Internal\Json\Value;
 
 /**
@@ -21,7 +23,7 @@ use VeryCodeCom\Cargoboard\Internal\Json\Value;
  *
  *   if ($event->isProduction()) {
  *       $shipment = $repository->findByCargoboardReference($event->reference);
- *       $shipment->applyStatus($event->statusCode, $event->label, $event->originatedAt);
+ *       $shipment->applyStatus($event->statusCode, $event->describe(), $event->originatedAt);
  *   }
  *
  * Note the two reference fields and which is whose: {@see self::$reference} is Cargoboard's
@@ -135,5 +137,44 @@ final class WebhookEvent
     public function hasDeliveryEstimate(): bool
     {
         return $this->estimatedDeliveryAtFrom !== null || $this->estimatedDeliveryAtUntil !== null;
+    }
+
+    /** The collection window as this event estimates it, or null when it carries none. */
+    public function pickupWindow(): ?TrackingWindow
+    {
+        return TrackingWindow::of($this->estimatedCollectionAtFrom, $this->estimatedCollectionAtUntil);
+    }
+
+    /** The delivery window as this event estimates it, or null when it carries none. */
+    public function deliveryWindow(): ?TrackingWindow
+    {
+        return TrackingWindow::of($this->estimatedDeliveryAtFrom, $this->estimatedDeliveryAtUntil);
+    }
+
+    /** True when this event refines either window - i.e. it says something even if `message` is null. */
+    public function hasEstimates(): bool
+    {
+        return $this->pickupWindow() !== null || $this->deliveryWindow() !== null;
+    }
+
+    /**
+     * A line fit to show a customer: the text Cargoboard sent, else the signature it carries,
+     * else the estimates it carries, else `Status {code}`.
+     *
+     * Identical in behaviour to {@see \VeryCodeCom\Cargoboard\Dto\TrackingEvent::describe()},
+     * so a webhook-driven history and a polled one read the same. A webhook payload usually
+     * does carry `label`, which is the branch a polled event never gets.
+     */
+    public function describe(?\DateTimeZone $timezone = null): string
+    {
+        return EventNarrative::describe(
+            $this->label,
+            $this->message,
+            $this->statusCode,
+            $this->pickupWindow(),
+            $this->deliveryWindow(),
+            $timezone,
+            $this->nameOfSigner,
+        );
     }
 }

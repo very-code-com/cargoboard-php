@@ -1,0 +1,97 @@
+{
+    "data": {
+        "trackingSteps": [
+            {
+                "sequence": 1,
+                "type": "ACCEPTED",
+                "code": "100",
+                "status": "SUCCESS",
+                "originatedAt": "2026-08-17T09:14:31.000Z"
+            },
+            {
+                "sequence": 3,
+                "type": "PICKED_UP",
+                "code": "400",
+                "status": "SUCCESS",
+                "originatedAt": "2026-08-18T11:41:00.000Z"
+            },
+            {
+                "sequence": 7,
+                "type": "DELIVERED",
+                "code": "700",
+                "status": "PENDING",
+                "originatedAt": null
+            }
+        ],
+        "statusEventHistory": [
+            {
+                "id": "cmsy9hj2u1y523p0y5uawdp9y",
+                "originatedAt": "2026-08-18T06:06:20.000Z",
+                "code": "540",
+                "message": null,
+                "nameOfSigner": null,
+                "stopsUntilCollection": null,
+                "stopsUntilDelivery": null,
+                "vehicleLatitude": null,
+                "vehicleLongitude": null,
+                "emittedBy": "4638",
+                "waitingMinutes": null,
+                "estimatedDeliveryAtFrom": "2026-08-19T06:00:00.000Z",
+                "estimatedDeliveryAtUntil": "2026-08-21T14:00:00.000Z",
+                "estimatedPickupAtFrom": "2026-08-18T07:00:00.000Z",
+                "estimatedPickupAtUntil": "2026-08-18T15:00:00.000Z"
+            },
+            {
+                "id": "cmsy9hj2u1y523p0y5uawdp9z",
+                "originatedAt": "2026-08-18T09:15:00.000Z",
+                "code": "510",
+                "message": "BO26082222",
+                "nameOfSigner": null,
+                "emittedBy": "4638",
+                "estimatedDeliveryAtFrom": "2026-08-19T06:00:00.000Z",
+                "estimatedDeliveryAtUntil": "2026-08-20T14:00:00.000Z",
+                "estimatedPickupAtFrom": null,
+                "estimatedPickupAtUntil": null
+            },
+            {
+                "id": "evt-722-voice-1",
+                "originatedAt": "2026-08-18T16:00:00.000Z",
+                "code": "722",
+                "message": "2026-08-19 07:00-14:00 V +49761584746",
+                "emittedBy": "4638"
+            },
+            {
+                "id": "evt-722-mail",
+                "originatedAt": "2026-08-18T16:00:00.000Z",
+                "code": "722",
+                "message": "2026-08-19 07:00-14:00 E info@example.com",
+                "emittedBy": "4638"
+            },
+            {
+                "id": "evt-722-voice-2",
+                "originatedAt": "2026-08-18T16:00:00.000Z",
+                "code": "722",
+                "message": "2026-08-19 07:00-14:00 V +49761584746",
+                "emittedBy": "4638"
+            },
+            {
+                "id": "evt-831",
+                "originatedAt": "2026-08-19T04:12:00.000Z",
+                "code": "831",
+                "message": "The shipment has arrived at the delivery depot",
+                "emittedBy": "4638"
+            },
+            {
+                "id": "evt-809",
+                "originatedAt": "2026-08-18T18:30:00.000Z",
+                "code": "809",
+                "message": null,
+                "emittedBy": "4638",
+                "estimatedPickupAtFrom": "2026-08-18T07:00:00.000Z",
+                "estimatedPickupAtUntil": "2026-08-18T15:00:00.000Z",
+                "estimatedDeliveryAtFrom": "2026-08-21T05:00:00.000Z",
+                "estimatedDeliveryAtUntil": "2026-08-21T12:00:00.000Z"
+            }
+        ]
+    }
+}

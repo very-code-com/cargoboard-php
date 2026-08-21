@@ -46,18 +46,25 @@ function handleWebhook(string $rawBody): string
     // back to Cargoboard's shipment reference.
     $key = $event->customerOrderCode ?? $event->reference ?? '(unknown)';
 
+    // describe() is the display line: the label when Cargoboard sends one, else
+    // the message, else the estimates the event carries, else "Status {code}".
+    // It behaves identically to TrackingEvent::describe(), so a webhook-driven
+    // history and a polled one read the same.
     $lines = [
         sprintf('  order      : %s (Cargoboard %s)', $key, $event->reference ?? '-'),
-        sprintf('  status     : %s %s', $event->statusCode ?? '-', $event->label ?? ''),
+        sprintf('  status     : %s %s', $event->statusCode ?? '-', $event->describe()),
         sprintf('  happened at: %s', $event->originatedAt?->format('Y-m-d H:i:s') ?? '-'),
     ];
 
-    if ($event->hasDeliveryEstimate()) {
-        $lines[] = sprintf(
-            '  new ETA    : %s - %s',
-            $event->estimatedDeliveryAtFrom?->format('Y-m-d H:i') ?? '?',
-            $event->estimatedDeliveryAtUntil?->format('Y-m-d H:i') ?? '?',
-        );
+    // Store on the event id: it is the only key that separates two notification
+    // events sent in the same second (SMS and e-mail share a status code and a
+    // timestamp), which is the same trap the polling API has.
+    if ($event->eventId !== null) {
+        $lines[] = sprintf('  event id   : %s', $event->eventId);
+    }
+
+    if ($event->deliveryWindow() !== null) {
+        $lines[] = sprintf('  new ETA    : %s', $event->deliveryWindow()?->format());
     }
 
     if ($event->isProofOfDelivery()) {

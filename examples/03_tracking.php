@@ -5,6 +5,8 @@
  * ---------------------------------------------------------------------------
  * Demonstrates:
  *   - the two views a tracking response contains: milestones and raw events
+ *   - the raw feed vs. the tidied one: $tracking->events vs $tracking->timeline()
+ *   - describe(), which renders an event that has no message text
  *   - reading the estimated delivery window as it gets refined en route
  *   - the difference between the two customer-facing tracking links
  *
@@ -65,18 +67,32 @@ try {
     }
 
     // -----------------------------------------------------------------------
-    // 2. The raw event feed: everything the network reported, including the
-    //    estimates that a customer-facing UI wants.
+    // 2. The event feed, in the form you want for a history: timeline() is
+    //    $tracking->events deduplicated on the event id and put in
+    //    chronological order. Use ->events instead when you want the response
+    //    untouched; it repeats the notification events that share a timestamp.
+    //
+    //    describe() is the line to print. Do NOT write
+    //    `$event->label ?? $event->message ?? $event->code`: on this endpoint
+    //    `label` is never sent and a third of all events have no message, so
+    //    that chain prints a bare "540" as the description of event 540.
     // -----------------------------------------------------------------------
+    $berlin = new DateTimeZone('Europe/Berlin');
+
     echo "\nEvent history\n";
-    foreach ($tracking->events as $event) {
+    foreach ($tracking->timeline() as $event) {
         printf(
             "  %-17s %-5s %s\n",
-            $event->originatedAt?->format('Y-m-d H:i') ?? '',
+            $event->originatedAt?->setTimezone($berlin)->format('Y-m-d H:i') ?? '',
             $event->code ?? '',
-            $event->label ?? $event->message ?? '',
+            $event->describe($berlin),
         );
 
+        // The event id is undocumented but always sent, and it is the only safe
+        // key to store a row under: (code, originatedAt) is not unique.
+        if ($event->id !== null) {
+            printf("      id %s\n", $event->id);
+        }
         if ($event->location !== null) {
             printf("      at %s %s\n", $event->location->depotId ?? '', $event->location->name ?? '');
         }
@@ -86,19 +102,33 @@ try {
         if ($event->stopsUntilDelivery !== null) {
             printf("      %d stop(s) until delivery\n", (int) $event->stopsUntilDelivery);
         }
-    }
 
-    $estimate = $tracking->estimatedDelivery();
-    if ($estimate !== null) {
-        printf(
-            "\nEstimated delivery: %s - %s\n",
-            $estimate['from']?->format('Y-m-d H:i') ?? '?',
-            $estimate['until']?->format('Y-m-d H:i') ?? '?',
-        );
+        // When an event has a message AND estimates, both halves are available
+        // separately, so you can put them on one line yourself.
+        if ($event->message !== null && $event->hasEstimates()) {
+            printf("      %s\n", (string) $event->estimateSummary($berlin));
+        }
     }
 
     // -----------------------------------------------------------------------
-    // 3. Links for the end customer. The order-id link unlocks the shipment
+    // 3. The current estimates: the newest event that carries a window wins.
+    // -----------------------------------------------------------------------
+    $delivery = $tracking->latestDeliveryWindow();
+    $pickup   = $tracking->latestPickupWindow();
+
+    if ($pickup !== null) {
+        echo "\nEstimated collection: " . $pickup->format($berlin) . "\n";
+    }
+    if ($delivery !== null) {
+        echo "Estimated delivery  : " . $delivery->format($berlin) . "\n";
+
+        if ($delivery->isSingleDay()) {
+            echo "  (a single-day window - worth telling the consignee)\n";
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // 4. Links for the end customer. The order-id link unlocks the shipment
     //    directly; the reference link makes them solve a captcha first.
     // -----------------------------------------------------------------------
     $order = $client->fetchOrder($reference);

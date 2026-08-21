@@ -219,6 +219,44 @@ Small mismatches between the published schemas and live responses, all handled l
   is a plain string with a `packageType()` helper for the known ones.
 - `Quotation.quantityOfEuroPallets` is declared with type `Function` in the schema, which is a
   serialisation artefact rather than a real type; it is not modelled here.
+- Tracking events carry an **`id`** on every event, which appears nowhere in the
+  `TrackingStatus` schema. It is parsed anyway (`TrackingEvent::$id`), because it is the only
+  safe storage key — see below.
+
+---
+
+## The tracking feed: three traps
+
+Reported by an integrator against live order 12198331 (Aug 2026) and confirmed against the
+OpenAPI definition in [`plans/reference/openapi/`](../plans/reference/openapi).
+
+**1. `(code, originatedAt)` is not a unique key.** One shipment produced three `722` events with
+the same code and the same timestamp: a phone notification, an e-mail notification, and a repeat
+of the first. Storing on that pair kept 14 of 15 events, dropped the e-mail one silently, and —
+on a later repair pass — matched two different events to the same row, leaving one event's text
+under another's timestamp. The undocumented `id` is the key. `TrackingEvent::fingerprint()`
+returns it, falling back to a composite of the payload when the API sends none, and
+`TrackingResult::timeline()` deduplicates on it.
+
+**2. `label` is not a field of this endpoint.** It appears in no OpenAPI definition Cargoboard
+publishes and is never sent on `GET /v1/orders/{id}/tracking`; it belongs to the Track & Trace
+webhook payload. The property is kept on `TrackingEvent` for the webhook-shaped data some
+integrations feed through it, but the docblock advice to display `label` was wrong and is gone.
+
+**3. A null `message` does not mean an empty event.** Codes 540, 500, 20 and 809 arrive with
+`message: null` and carry `estimatedPickupAt*` / `estimatedDeliveryAt*` instead — the collection
+and delivery windows, refined as the transport progresses. `describe()` falls back to those
+before falling back to `Status {code}`, so no event renders as a bare number.
+
+Two further shape notes on the same endpoint:
+
+- The live response sends `estimatedPickupAt*` and `estimatedDeliveryAt*`. The schema documents
+  `estimatedCollectionAt*` and `estimatedArrivalAt*` — and marks them **required** — but they
+  were absent from all 15 live events. `pickupWindow()` and `deliveryWindow()` read both
+  spellings.
+- `location`, `createdAt`, `source`, `causedBy` and `deliveringPartnerOrderNumber` are documented
+  but were absent from every live event on that account. They stay on the DTO because they are
+  in the schema; treat them as optional extras.
 
 ---
 
@@ -242,6 +280,29 @@ Two special uses of the same fields:
 
 ---
 
+## Private deliveries need more than the private-customer flag
+
+From Cargoboard support, after a live B2C booking: `consignee.isPrivateCustomer: true` is **not
+sufficient**. A private delivery must also set either `wantsContactBeforeDelivery` (Cargoboard
+rings ahead to agree a slot) or `wantsDeliveryWithoutConsigneePresence` (the goods may be left),
+or it runs into operational trouble at the delivery depot.
+
+The API accepts the booking without either and nothing in the response says so — a human noticed
+and wrote in. That makes it a warning rather than an error here: refusing a booking the API
+accepts is not this library's call, so `CargoboardClient::warningsFor()` returns it and every
+quote and booking logs it at warning level.
+
+---
+
+## There is no update endpoint
+
+The documented API is `POST /v1/orders`, `GET /v1/orders/{id}`, `POST /v1/orders/{id}/cancel` —
+no `PATCH` or `PUT`. A booked order cannot be amended over the API; a missing delivery flag has
+to be fixed by <api@cargoboard.com> by hand, or by cancelling and re-booking. This is why the
+warning above is worth having before the booking goes out rather than after.
+
+---
+
 ## Where the documentation lives
 
 - Human documentation: <https://docs.cargoboard.com>
@@ -252,5 +313,7 @@ Two special uses of the same fields:
 - Tracking status codes (some 450 of them) are published as a Google Sheet linked from the
   [Track & Trace page](https://docs.cargoboard.com/reference/track-trace-shipment-status), not in
   the API reference. That is why `TrackingEvent::$code` is a string here rather than an enum:
-  branch on the milestone (`TrackingStep`) for logic and use the code for display or logging.
+  branch on the milestone (`TrackingStep`) for logic, and use `describe()` for display. This
+  library deliberately does not guess at what a numeric code means — a package that got that
+  wrong would be worse than one that admits it does not know.
 - Questions: <api@cargoboard.com>. They answer quickly.

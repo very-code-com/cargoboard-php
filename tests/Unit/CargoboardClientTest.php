@@ -7,6 +7,10 @@ namespace VeryCodeCom\Cargoboard\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use VeryCodeCom\Cargoboard\CargoboardClient;
 use VeryCodeCom\Cargoboard\CargoboardConfig;
+use VeryCodeCom\Cargoboard\Dto\Consignee;
+use VeryCodeCom\Cargoboard\Dto\ShipmentRequest;
+use VeryCodeCom\Cargoboard\Dto\TrackingEvent;
+use VeryCodeCom\Cargoboard\Dto\TrackingResult;
 use VeryCodeCom\Cargoboard\Enum\CostItemType;
 use VeryCodeCom\Cargoboard\Enum\LabelFormat;
 use VeryCodeCom\Cargoboard\Enum\Product;
@@ -296,6 +300,182 @@ final class CargoboardClientTest extends TestCase
         self::assertTrue($tracking->isDelivered());
         self::assertSame('F. Müller', $tracking->signedBy());
         self::assertTrue($tracking->latestEvent()?->isProofOfDelivery());
+    }
+
+    /**
+     * The three findings reported by an integrator against live order 12198331 (Aug 2026),
+     * pinned against a fixture with that response's shape.
+     */
+    public function testLiveTrackingFeedKeepsEventIdsAndEveryNotificationEvent(): void
+    {
+        $transport = FakeTransport::json($this->fixture('tracking_live_events.json'));
+        $tracking  = $this->client($transport)->fetchTracking('12198331');
+
+        // 1. The id the API sends on every event survives parsing.
+        self::assertSame('cmsy9hj2u1y523p0y5uawdp9y', $tracking->events[0]->id);
+
+        // The three 722 notification events share (code, originatedAt) - two of them share the
+        // message too - so anything but the id as a key loses one of them silently.
+        $notifications = array_filter($tracking->timeline(), static fn ($e): bool => $e->code === '722');
+        self::assertCount(3, $notifications);
+
+        $ids = array_map(static fn ($e): ?string => $e->id, $tracking->timeline());
+        self::assertSame($ids, array_unique($ids), 'Every live event carries a distinct id.');
+    }
+
+    public function testTimelineIsChronologicalAndDeduplicatedWhileEventsStayRaw(): void
+    {
+        $transport = FakeTransport::json($this->fixture('tracking_live_events.json'));
+        $tracking  = $this->client($transport)->fetchTracking('12198331');
+
+        $rawCodes = array_map(static fn ($e): ?string => $e->code, $tracking->events);
+        self::assertSame(['540', '510', '722', '722', '722', '831', '809'], $rawCodes);
+
+        // 809 originated before 831 but the API sent it last; timeline() puts it back in order
+        // without touching the raw feed.
+        $orderedCodes = array_map(static fn ($e): ?string => $e->code, $tracking->timeline());
+        self::assertSame(['540', '510', '722', '722', '722', '809', '831'], $orderedCodes);
+    }
+
+    public function testTimelineDropsAnEventTheFeedRepeats(): void
+    {
+        $repeated = ['id' => 'evt-1', 'code' => '540', 'originatedAt' => '2026-08-18T06:06:20.000Z'];
+        $tracking = TrackingResult::fromArray(['statusEventHistory' => [$repeated, $repeated]]);
+
+        self::assertCount(2, $tracking->events);
+        self::assertCount(1, $tracking->timeline());
+    }
+
+    /**
+     * Without an id there is nothing left but the payload itself, and two events that differ
+     * only in a field the API did not send collapse. This is what deduplicating on
+     * `(code, originatedAt)` does to the 722 events, one level worse.
+     */
+    public function testFingerprintFallsBackToThePayloadWhenTheApiSendsNoId(): void
+    {
+        $withoutId = new TrackingEvent(code: '722', originatedAt: new \DateTimeImmutable('2026-08-18T16:00:00Z'), message: 'V +49761584746');
+        $other     = new TrackingEvent(code: '722', originatedAt: new \DateTimeImmutable('2026-08-18T16:00:00Z'), message: 'E info@example.com');
+
+        self::assertNotSame($withoutId->fingerprint(), $other->fingerprint());
+        self::assertSame($withoutId->fingerprint(), (clone $withoutId)->fingerprint());
+    }
+
+    public function testDescribeFallsBackToTheEstimatesAndNeverToABareCode(): void
+    {
+        $transport = FakeTransport::json($this->fixture('tracking_live_events.json'));
+        $timeline  = $this->client($transport)->fetchTracking('12198331')->timeline();
+
+        $byCode = [];
+        foreach ($timeline as $event) {
+            $byCode[$event->code ?? ''] ??= $event;
+        }
+
+        // 540 has message: null but carries both windows - the case that used to render "540".
+        self::assertSame(
+            'Estimates updated: collection 18.08.2026 07:00-15:00, delivery 19.08.2026 06:00 - 21.08.2026 14:00',
+            $byCode['540']->describe(),
+        );
+
+        // A message is used as-is; the estimates stay available separately for anyone who
+        // wants both halves on one line.
+        self::assertSame('BO26082222', $byCode['510']->describe());
+        self::assertSame('Delivery estimated 19.08.2026 06:00 - 20.08.2026 14:00', $byCode['510']->estimateSummary());
+
+        self::assertSame('The shipment has arrived at the delivery depot', $byCode['831']->describe());
+
+        // A proof of delivery arrives as a bare code plus a signature - reading the signature
+        // is not the same as guessing what the code means.
+        self::assertSame(
+            'Signed by A. Nowak',
+            (new TrackingEvent(code: '700', nameOfSigner: 'A. Nowak'))->describe(),
+        );
+
+        // An event with neither text, signature nor estimates says so honestly, without
+        // inventing a meaning for the number.
+        self::assertSame('Status 900', (new TrackingEvent(code: '900'))->describe());
+        self::assertSame('Status update', (new TrackingEvent())->describe());
+    }
+
+    public function testWindowsReadBothTheDocumentedAndTheLiveFieldSpelling(): void
+    {
+        $live = new TrackingEvent(
+            estimatedPickupAtFrom: new \DateTimeImmutable('2026-08-18T07:00:00Z'),
+            estimatedPickupAtUntil: new \DateTimeImmutable('2026-08-18T15:00:00Z'),
+        );
+        self::assertSame('18.08.2026 07:00-15:00', $live->pickupWindow()?->format());
+        self::assertTrue($live->hasEstimates());
+
+        // What the OpenAPI definition documents instead, as the older fixtures still send.
+        $documented = new TrackingEvent(
+            estimatedCollectionAtFrom: new \DateTimeImmutable('2026-08-18T07:00:00Z'),
+            estimatedArrivalAtFrom: new \DateTimeImmutable('2026-08-19T06:00:00Z'),
+        );
+        self::assertSame('from 18.08.2026 07:00', $documented->pickupWindow()?->format());
+        self::assertSame('from 19.08.2026 06:00', $documented->deliveryWindow()?->format());
+
+        self::assertNull((new TrackingEvent(code: '540'))->pickupWindow());
+        self::assertFalse((new TrackingEvent(code: '540'))->hasEstimates());
+    }
+
+    public function testLatestWindowsTakeTheNewestEstimateAndAcceptADisplayTimezone(): void
+    {
+        $transport = FakeTransport::json($this->fixture('tracking_live_events.json'));
+        $tracking  = $this->client($transport)->fetchTracking('12198331');
+
+        // 809 is the newest event carrying a delivery window, even though the API sent it last.
+        self::assertSame(
+            '21.08.2026 05:00-12:00',
+            $tracking->latestDeliveryWindow()?->format(),
+        );
+        self::assertSame('18.08.2026 07:00-15:00', $tracking->latestPickupWindow()?->format());
+
+        // The 1.0 array shape returns the same estimate.
+        self::assertSame(
+            '2026-08-21 05:00',
+            $tracking->estimatedDelivery()['from']?->format('Y-m-d H:i'),
+        );
+
+        self::assertSame(
+            '21.08.2026 07:00-14:00',
+            $tracking->latestDeliveryWindow()?->format(new \DateTimeZone('Europe/Berlin')),
+        );
+    }
+
+    public function testAPrivateConsigneeWithoutADeliveryArrangementIsWarnedAboutButNotRefused(): void
+    {
+        $base   = ShipmentFactory::bookable();
+        $client = $this->client(FakeTransport::json($this->fixture('order_success.json')));
+
+        $private = static fn (Consignee $consignee): ShipmentRequest => new ShipmentRequest(
+            product: $base->product,
+            shipper: $base->shipper,
+            consignee: $consignee,
+            lines: $base->lines,
+        );
+
+        $unarranged = $private(new Consignee(
+            address: $base->consignee->address,
+            name: $base->consignee->name,
+            isPrivateCustomer: true,
+        ));
+
+        $warnings = $client->warningsFor($unarranged);
+        self::assertCount(1, $warnings);
+        self::assertStringContainsString('wantsContactBeforeDelivery', $warnings[0]);
+
+        // A warning is not an error: Cargoboard accepts the booking, so this library does too.
+        self::assertSame([], $client->validateLocally($unarranged));
+
+        $arranged = $private(new Consignee(
+            address: $base->consignee->address,
+            name: $base->consignee->name,
+            isPrivateCustomer: true,
+            wantsContactBeforeDelivery: true,
+        ));
+        self::assertSame([], $client->warningsFor($arranged));
+
+        // A business consignee is never flagged.
+        self::assertSame([], $client->warningsFor($base));
     }
 
     // -- invoices and ADR ---------------------------------------------

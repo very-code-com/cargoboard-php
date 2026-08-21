@@ -22,14 +22,29 @@ use VeryCodeCom\Cargoboard\Enum\Product;
  */
 final class ShipmentFactory
 {
-    /** A Thursday, so pickup-day validation is satisfied. */
-    public const PICKUP_DATE = '2026-08-20';
+    /**
+     * The next Thursday, so pickup-day validation is satisfied.
+     *
+     * Computed rather than pinned: Cargoboard rejects a pickup date in the past with a 422, so a
+     * hard-coded date turns the integration suite red the day it goes by. The weekday is what
+     * the tests actually depend on, and `next thursday` is always in the future.
+     */
+    public static function pickupDate(): string
+    {
+        return (new \DateTimeImmutable('next thursday'))->format('Y-m-d');
+    }
 
-    /** The Friday after {@see self::PICKUP_DATE}. */
-    public const DELIVERY_DATE = '2026-08-21';
+    /** The Friday after {@see self::pickupDate()}. */
+    public static function deliveryDate(): string
+    {
+        return (new \DateTimeImmutable('next thursday +1 day'))->format('Y-m-d');
+    }
 
-    /** A Saturday, for the tests that assert weekend pickups are rejected. */
-    public const WEEKEND_DATE = '2026-08-22';
+    /** The Saturday after it, for the tests that assert weekend days are rejected. */
+    public static function weekendDate(): string
+    {
+        return (new \DateTimeImmutable('next thursday +2 days'))->format('Y-m-d');
+    }
 
     /** A complete, bookable domestic shipment. */
     public static function bookable(): ShipmentRequest
@@ -39,7 +54,7 @@ final class ShipmentFactory
             shipper: new Shipper(
                 address: new Address('58553', CountryCode::DE, 'Halver', 'Ostrstr. 24'),
                 name: 'Mustermann GmbH',
-                pickupOn: self::PICKUP_DATE,
+                pickupOn: self::pickupDate(),
             ),
             consignee: new Consignee(
                 address: new Address('85137', CountryCode::DE, 'Walting', 'Hofstetterstr. 4'),
@@ -56,7 +71,7 @@ final class ShipmentFactory
             product: Product::Standard,
             shipper: new Shipper(
                 address: new Address('10115', CountryCode::DE, 'Berlin'),
-                pickupOn: self::PICKUP_DATE,
+                pickupOn: self::pickupDate(),
             ),
             consignee: new Consignee(address: new Address('33100', CountryCode::DE, 'Paderborn')),
             lines: [self::palletLine()],
@@ -99,7 +114,7 @@ final class ShipmentFactory
             shipper: new Shipper(
                 address: new Address('40239', CountryCode::DE, 'Düsseldorf', 'Examplestreet 12a'),
                 name: 'Producer ABC GmbH & Co. KG',
-                pickupOn: self::PICKUP_DATE,
+                pickupOn: self::pickupDate(),
             ),
             consignee: new Consignee(
                 address: new Address('41061', CountryCode::DE, 'Mönchengladbach', 'Examplestreet 5'),

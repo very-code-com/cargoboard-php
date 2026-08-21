@@ -39,6 +39,7 @@ CargoboardClient::production(string $apiKey): self
 | `config()` | `CargoboardConfig` | The configuration in use. |
 | `isParcelMode()` | `bool` | Whether this client is in parcel mode. |
 | `validateLocally(ShipmentRequest, ValidationMode = Order, ?bool $parcelMode = null)` | `list<string>` | Runs every local rule without any network call. Empty array means valid. |
+| `warningsFor(ShipmentRequest, ValidationMode = Order)` | `list<string>` | Things Cargoboard accepts and then sorts out by hand. Never thrown; logged at warning level on every quote and booking. |
 
 `CargoboardConfig` is built with `::sandbox()`, `::production()`, `::fromEnv()` or `::fromArray()`;
 see the [README](../README.md#configuration) for the environment variables and array keys.
@@ -101,20 +102,72 @@ answer errors as JSON.
 |--------|----------|---------|
 | `fetchTracking(string $id)` | `GET /v1/orders/{id}/tracking` | `TrackingResult` |
 
-`TrackingResult` carries both views Cargoboard returns:
+`TrackingResult` carries both views Cargoboard returns, plus a tidied form of the event feed:
 
 ```php
 $tracking->steps          // list<TrackingStep>  - the milestone chain, reached and unreached
-$tracking->events         // list<TrackingEvent> - the raw status event history
+$tracking->events         // list<TrackingEvent> - the raw status feed, in the API's own order
+$tracking->timeline()     // list<TrackingEvent> - the same feed, deduplicated and chronological
 
 $tracking->currentStep()      // ?TrackingStep - furthest milestone actually reached
 $tracking->step(TrackingStepType::Delivered)
 $tracking->isDelivered()      // bool
 $tracking->hasWarning()       // bool - any milestone came back as a warning
 $tracking->latestEvent()      // ?TrackingEvent
+$tracking->latestDeliveryWindow() // ?TrackingWindow - newest estimate on the feed
+$tracking->latestPickupWindow()   // ?TrackingWindow
 $tracking->estimatedDelivery()// ?array{from: ?DateTimeImmutable, until: ?DateTimeImmutable}
 $tracking->signedBy()         // ?string - from the newest proof-of-delivery event
 ```
+
+### Raw feed or tidied feed
+
+`events` is the response untouched. `timeline()` is what you want before storing or rendering:
+deduplicated on the event id and sorted oldest first.
+
+```php
+foreach ($tracking->timeline() as $event) {
+    printf("%-5s %s\n", $event->code, $event->describe());
+}
+```
+
+### Displaying an event
+
+**Do not** write `$event->label ?? $event->message ?? $event->code`. `label` is not part of this
+endpoint's schema and live accounts never send it, and around a third of events have no
+`message` either — so that chain prints a bare `540` as the description of event 540. Those
+"empty" events are not empty: they carry the refined collection and delivery windows, which is
+the most useful thing on the feed.
+
+```php
+$event->describe(?DateTimeZone)        // string - text, else the estimates, else "Status {code}"
+$event->estimateSummary(?DateTimeZone) // ?string - just the estimates half
+$event->pickupWindow()                 // ?TrackingWindow
+$event->deliveryWindow()               // ?TrackingWindow
+$event->hasEstimates()                 // bool
+```
+
+`describe()` never invents a meaning for a status code: with ~450 network codes published as a
+spreadsheet, `Status 809` is the honest fallback. The windows are UTC as the API sends them;
+pass a `DateTimeZone` to render local time.
+
+`TrackingWindow` (`from`, `until`) formats itself day-first: `18.08.2026 07:00-15:00` within one
+day, `19.08.2026 06:00 - 21.08.2026 14:00` across days, `from 18.08.2026 07:00` when only one
+end is known.
+
+### Storing events
+
+```php
+$event->id            // ?string - undocumented, but sent on every live event
+$event->fingerprint() // string  - the id, or a composite when the API sends none
+```
+
+`(code, originatedAt)` is **not** a unique key. A shipment notified by both SMS and e-mail
+produces several `722` events sharing a code and a timestamp, so keying on that pair silently
+drops one and, on a repair pass, overwrites one event's row with another's text. Key on `id`.
+
+`WebhookEvent` offers the same `describe()`, `pickupWindow()`, `deliveryWindow()` and
+`hasEstimates()`, so a webhook-driven history and a polled one render identically.
 
 ---
 
@@ -260,7 +313,7 @@ Cargoboard defaults to **true**.
 
 Supporting value objects: `Price` (`amountInCents()`, `__toString()`), `VatPart`, `CostItem`,
 `OrderCostItem`, `Runtime`, `DeliveryWindow`, `Co2Emission`, `Link`, `Barcode`, `OrderLine`,
-`TrackingStep`, `TrackingEvent`, `TrackingLocation`, `TrackingLocationAddress`.
+`TrackingStep`, `TrackingEvent`, `TrackingWindow`, `TrackingLocation`, `TrackingLocationAddress`.
 
 Parsing is deliberately lenient: an unrecognised enum value becomes `null` (with the raw string
 kept on cost items as `rawType` / `rawSubtype`) rather than throwing, so a new status code on
@@ -338,6 +391,18 @@ messages are.
 - No dangerous goods, no `neutralData`.
 - The lane must start or end in Germany (no EU→EU).
 
+### Warnings, not errors
+
+Some rules Cargoboard enforces operationally rather than with an HTTP status: the API accepts
+the booking, and someone at a depot deals with the consequences. Refusing those bookings locally
+would be this library overruling the API, so they are returned by `warningsFor()` and logged at
+warning level instead of thrown.
+
+- A consignee with `isPrivateCustomer` but neither `wantsContactBeforeDelivery` nor
+  `wantsDeliveryWithoutConsigneePresence`. Per Cargoboard support, the private-customer flag on
+  its own is not sufficient: a B2C delivery needs either an appointment call or permission to
+  leave the goods, or it runs into trouble at the delivery depot.
+
 ---
 
 ## Exceptions
@@ -375,6 +440,9 @@ $event = WebhookEvent::fromJson($rawRequestBody);
 $event->reference;          // Cargoboard's shipment number
 $event->customerOrderCode;  // your own reference
 $event->statusCode;  $event->label;  $event->originatedAt;
+$event->eventId;            // the deduplication key - see Tracking, the same trap applies here
+$event->describe();         // the display line, identical in behaviour to TrackingEvent's
+$event->pickupWindow();  $event->deliveryWindow();  $event->hasEstimates();
 $event->isProduction();  $event->isProofOfDelivery();  $event->hasDeliveryEstimate();
 $event->raw;                // the payload verbatim
 

@@ -98,6 +98,40 @@ final class ShipmentValidator
         }
     }
 
+    /**
+     * Rules Cargoboard enforces operationally rather than with an HTTP status: the API accepts
+     * the booking, and a human at the depot deals with the consequences.
+     *
+     * These are deliberately NOT errors. Turning one into an exception would refuse a booking
+     * the API itself accepts, which is not this library's call to make; the client logs them at
+     * warning level instead, and {@see \VeryCodeCom\Cargoboard\CargoboardClient::warningsFor()}
+     * exposes them so a shop can show them next to a form.
+     *
+     * @return list<string> Warning messages; an empty array means nothing to flag.
+     */
+    public function warnings(ShipmentRequest $request, ValidationMode $mode): array
+    {
+        $warnings  = [];
+        $consignee = $request->consignee;
+
+        // Cargoboard support, after a live B2C booking: `isPrivateCustomer` on its own is not
+        // enough. A private delivery has nobody at a loading ramp and often nobody at home, so
+        // it needs either an appointment call or explicit permission to leave the goods, or it
+        // runs into trouble at the delivery depot. The API accepts the booking either way and
+        // only a human notices, which is exactly why it is worth saying here.
+        if ($mode === ValidationMode::Order
+            && $consignee->isPrivateCustomer === true
+            && $consignee->wantsContactBeforeDelivery !== true
+            && $consignee->wantsDeliveryWithoutConsigneePresence !== true
+        ) {
+            $warnings[] = 'consignee.isPrivateCustomer is set without wantsContactBeforeDelivery '
+                . 'or wantsDeliveryWithoutConsigneePresence: Cargoboard accepts the booking, but a '
+                . 'private delivery without either runs into trouble at the delivery depot.';
+        }
+
+        return $warnings;
+    }
+
     /** @param list<string> $errors */
     private function validateConsignee(Consignee $consignee, ValidationMode $mode, array &$errors): void
     {

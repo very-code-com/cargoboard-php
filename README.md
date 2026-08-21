@@ -177,7 +177,7 @@ Leave `debug` off in production to keep exceptions and logs concise.
 
 ---
 
-## Two things worth knowing up front
+## Three things worth knowing up front
 
 **1. A quotation needs much less than a booking.** The request body is identical for both, but a
 quotation only requires a post code and a country on each side, while a booking additionally
@@ -193,6 +193,19 @@ as freight. Parcel mode also switches on the parcel limits (32 kg physical and v
 ```php
 $parcels = $client->withParcelMode();
 $parcels->placeOrder($request);
+```
+
+**3. A tracking event with no message is not an empty event.** Roughly a third of the events on
+the status feed have `message: null` and carry the refined collection and delivery windows
+instead — the most useful thing on the feed. `label` is not part of this endpoint's schema at
+all, so the obvious `label ?? message ?? code` prints a bare `540` for a third of the history.
+Use `describe()`, and key stored rows on the event `id`: `(code, originatedAt)` is not unique.
+
+```php
+foreach ($client->fetchTracking($reference)->timeline() as $event) {
+    printf("%-5s %s\n", $event->code, $event->describe());
+    // 540   Estimates updated: collection 18.08.2026 07:00-15:00, delivery 19.08.2026 06:00 - 21.08.2026 14:00
+}
 ```
 
 ---
@@ -211,6 +224,11 @@ Covered: mandatory address fields per mode, Monday-to-Friday pickups and deliver
 content and dimensions, loading-metre geometry, vehicle payload ceilings and their required
 products, insurance needing a goods value, EUR-only goods values, dangerous-goods declarations,
 and the full parcel rule set. See [docs/API.md](docs/API.md#local-validation-rules).
+
+Some rules Cargoboard enforces at the depot rather than with an HTTP status — a private consignee
+booked without either `wantsContactBeforeDelivery` or `wantsDeliveryWithoutConsigneePresence` is
+accepted by the API and then causes trouble on delivery. Those are warnings, never exceptions:
+they are logged on every quote and booking, and `$client->warningsFor($request)` returns them.
 
 ---
 

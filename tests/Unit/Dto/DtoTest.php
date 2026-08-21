@@ -17,6 +17,7 @@ use VeryCodeCom\Cargoboard\Dto\NeutralData;
 use VeryCodeCom\Cargoboard\Dto\Price;
 use VeryCodeCom\Cargoboard\Dto\Runtime;
 use VeryCodeCom\Cargoboard\Dto\Shipper;
+use VeryCodeCom\Cargoboard\Dto\TrackingWindow;
 use VeryCodeCom\Cargoboard\Enum\CountryCode;
 use VeryCodeCom\Cargoboard\Enum\LoadingType;
 use VeryCodeCom\Cargoboard\Enum\PackageType;
@@ -336,5 +337,53 @@ final class DtoTest extends TestCase
         self::assertSame('NGW', $good->weightNetOrVolumeUnit);
         // 3 (transport category multiplier) x 9 kg net = 27 points.
         self::assertSame(27, $good->pointsTotal);
+    }
+
+    public function testTrackingWindowFormatsEveryShapeItCanBeIn(): void
+    {
+        $from  = new \DateTimeImmutable('2026-08-18T07:00:00Z');
+        $until = new \DateTimeImmutable('2026-08-18T15:00:00Z');
+
+        $sameDay = TrackingWindow::of($from, $until);
+        self::assertNotNull($sameDay);
+        self::assertTrue($sameDay->isSingleDay());
+        self::assertFalse($sameDay->isOpenEnded());
+        self::assertSame('18.08.2026 07:00-15:00', $sameDay->format());
+
+        $acrossDays = TrackingWindow::of($from, new \DateTimeImmutable('2026-08-21T14:00:00Z'));
+        self::assertNotNull($acrossDays);
+        self::assertFalse($acrossDays->isSingleDay());
+        self::assertSame('18.08.2026 07:00 - 21.08.2026 14:00', $acrossDays->format());
+
+        $openEnd = TrackingWindow::of($from, null);
+        self::assertNotNull($openEnd);
+        self::assertTrue($openEnd->isOpenEnded());
+        self::assertFalse($openEnd->isSingleDay());
+        self::assertSame('from 18.08.2026 07:00', $openEnd->format());
+
+        $openStart = TrackingWindow::of(null, $until);
+        self::assertNotNull($openStart);
+        self::assertSame('until 18.08.2026 15:00', $openStart->format());
+
+        // No estimate at all is a null window, not an empty one.
+        self::assertNull(TrackingWindow::of(null, null));
+        self::assertSame('', (new TrackingWindow())->format());
+    }
+
+    public function testTrackingWindowJudgesTheDayInTheDisplayTimezone(): void
+    {
+        // 21:00-23:00 UTC is one calendar day in UTC and crosses midnight in Berlin, so the
+        // compact single-day rendering is only correct for one of the two. The day is judged
+        // after the timezone shift, because the reader cares about the day they are shown.
+        $lateNight = new TrackingWindow(
+            new \DateTimeImmutable('2026-08-18T21:00:00Z'),
+            new \DateTimeImmutable('2026-08-18T23:00:00Z'),
+        );
+
+        self::assertSame('18.08.2026 21:00-23:00', $lateNight->format());
+        self::assertSame(
+            '18.08.2026 23:00 - 19.08.2026 01:00',
+            $lateNight->format(new \DateTimeZone('Europe/Berlin')),
+        );
     }
 }

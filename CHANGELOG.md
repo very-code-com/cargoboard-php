@@ -13,6 +13,70 @@ Nothing yet.
 
 ---
 
+## [1.1.0], 2026-08-21
+
+Prompted by field feedback from an integrator running the library against a live account
+(order 12198331, Aug 2026). Every claim below was re-checked against Cargoboard's OpenAPI
+definition; nothing is removed from the DTOs, so this release is backwards compatible.
+
+Verified against the live Cargoboard sandbox on release day: the full integration suite, plus a
+freight order, a parcel-mode order and a private-consignee order booked and cancelled end to end.
+
+### Added
+
+- `TrackingEvent::$id`. The tracking endpoint returns an `id` on every event; it appears in no
+  published schema and was being discarded during parsing. It is the only safe deduplication
+  key: `(code, originatedAt)` is **not** unique — a shipment notified by both phone and e-mail
+  produces several `722` events sharing a code and a timestamp, so keying on that pair drops
+  events silently and can overwrite one event's row with another's text.
+- `TrackingEvent::fingerprint()` — the id, or a composite of the payload when the API sends none.
+- `TrackingEvent::describe()` and `WebhookEvent::describe()` — a display line for an event:
+  the text the API sent, else the estimates the event carries, else `Status {code}`. Around a
+  third of live events have `message: null` and carry the refined collection and delivery
+  windows instead, so rendering `message` alone printed a bare status number for them. A proof
+  of delivery is the same shape — a bare code plus `nameOfSigner` — and renders as
+  `Signed by A. Nowak`. Status codes are still never translated: with ~450 of them published as
+  a spreadsheet, guessing would be worse than admitting ignorance.
+- `TrackingWindow`, and `pickupWindow()` / `deliveryWindow()` / `hasEstimates()` /
+  `estimateSummary()` on both `TrackingEvent` and `WebhookEvent`. The window accessors read both
+  the live field spelling (`estimatedPickupAt*`, `estimatedDeliveryAt*`) and the documented one
+  (`estimatedCollectionAt*`, `estimatedArrivalAt*`).
+- `TrackingResult::timeline()` — the status feed deduplicated on the event id and sorted oldest
+  first, for storing or rendering. `TrackingResult::$events` still holds the raw response.
+- `TrackingResult::latestDeliveryWindow()` and `latestPickupWindow()`.
+- `CargoboardClient::warningsFor()`. Rules Cargoboard enforces at the depot rather than with an
+  HTTP status: currently a consignee with `isPrivateCustomer` but neither
+  `wantsContactBeforeDelivery` nor `wantsDeliveryWithoutConsigneePresence`, which Cargoboard
+  support confirmed causes operational trouble. Warnings are logged on every quote and booking,
+  never thrown — the API accepts these bookings, and overruling it is not this library's call.
+
+### Fixed
+
+- `TrackingEvent`'s docblock advised displaying `label`, which appears in **no** Cargoboard
+  OpenAPI definition and is never sent by `GET /v1/orders/{id}/tracking` — it is a webhook field.
+  Following that advice produced `label ?? message ?? code`, whose third branch fired on about a
+  third of all events. The property is kept (webhook payloads carry it); the advice is replaced,
+  and the docblock now lists which fields the tracking endpoint actually sends.
+- `TrackingResult::estimatedDelivery()` could keep an older estimate when the newest event
+  carrying a window had no `originatedAt`. It now shares one implementation with
+  `latestDeliveryWindow()`. The array shape is unchanged.
+
+### Internal
+
+- Test fixtures pinned `pickupOn` to a fixed date, which Cargoboard rejects with a 422 once it is
+  in the past — the integration suite went red on its own the day it passed. `ShipmentFactory`
+  now derives its dates from the day of the run, keeping the weekday the tests depend on.
+
+### Documentation
+
+- `docs/CARGOBOARD-NOTES.md` gains "The tracking feed: three traps", "Private deliveries need
+  more than the private-customer flag", and a note that the API has no update endpoint — a booked
+  order cannot be amended, only cancelled or fixed by support.
+- Examples 03, 09 and 10 updated; example 03 previously demonstrated the `label ?? message`
+  anti-pattern.
+
+---
+
 ## [1.0.0], 2026-08-18
 
 Initial release. Verified end to end against the live Cargoboard sandbox: quotation, booking,
@@ -145,5 +209,6 @@ handled by this library and documented in [docs/CARGOBOARD-NOTES.md](docs/CARGOB
 - **Webhooks are not signed.** Cargoboard documents no signature or shared secret, so authenticate
   the endpoint the way you agreed when registering it and make the handler idempotent.
 
-[Unreleased]: https://github.com/very-code-com/cargoboard-php/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/very-code-com/cargoboard-php/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/very-code-com/cargoboard-php/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/very-code-com/cargoboard-php/releases/tag/v1.0.0
